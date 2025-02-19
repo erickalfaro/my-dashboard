@@ -2,8 +2,14 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+interface DataItem {
+  id: number;
+  name: string;
+  value: string;
+}
+
 export default function Home() {
-  const [data, setData] = useState([]);
+  const [data, setData] = useState<DataItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   const API_URL = "https://api.example.com/data"; // Replace with your API
@@ -11,7 +17,7 @@ export default function Home() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(API_URL);
+      const response = await axios.get<DataItem[]>(API_URL);
       setData(response.data);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -42,7 +48,7 @@ export default function Home() {
             </tr>
           </thead>
           <tbody>
-            {data.map((item: any) => (
+            {data.map((item) => (
               <tr key={item.id}>
                 <td className="border border-gray-400 p-2">{item.id}</td>
                 <td className="border border-gray-400 p-2">{item.name}</td>
