@@ -1,4 +1,5 @@
-// app/api/series/[ticker]/route.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 
 import { NextResponse } from "next/server";
 
