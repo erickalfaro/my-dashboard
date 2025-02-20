@@ -104,27 +104,23 @@ export default function Home() {
     setSelectedStock(stockName);
   };
 
-  // Get the data item for the currently selected stock
   const currentStockData = stockData.find((item) => item.name === selectedStock);
-
-  // --------------------------
-  // Chart Configuration
-  // --------------------------
-
+  const safeSelectedStock = selectedStock ?? "";  // Ensure it's at least an empty string
+  
   const chartData = {
     labels: currentStockData ? xAxisLabels.slice(0, currentStockData.trend.length) : [],
     datasets: [
       {
-        label: `${selectedStock} Trend`,
+        label: `${safeSelectedStock} Trend`,
         data: currentStockData ? currentStockData.trend : [],
         borderColor: "rgba(75,192,192,1)",
         backgroundColor: "rgba(75,192,192,0.2)",
         fill: false,
       },
       {
-        label: `${selectedStock} Open Price`,
-        data: currentStockData && additionalData[selectedStock]
-          ? Array(currentStockData.trend.length).fill(additionalData[selectedStock].open)
+        label: `${safeSelectedStock} Open Price`,
+        data: currentStockData && additionalData[safeSelectedStock]
+          ? Array(currentStockData.trend.length).fill(additionalData[safeSelectedStock].open)
           : [],
         borderColor: "rgba(255,99,132,1)",
         backgroundColor: "rgba(255,99,132,0.2)",
