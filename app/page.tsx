@@ -29,8 +29,8 @@ interface DataItem {
   trend: number[];
 }
 
-// NOTE: For API integrations, consider moving the URL into an environment variable.
-const API_URL = "/api/mockdata";
+// Use the actual API endpoint instead of local mock data.
+const API_URL = "https://cashdash.free.beeceptor.com/todos";
 
 // Dummy additional data for each stock symbol.
 const additionalData: Record<string, { open: number; high: number; low: number; volume: number }> = {
@@ -107,6 +107,10 @@ export default function Home() {
   const currentStockData = stockData.find((item) => item.name === selectedStock);
   const safeSelectedStock = selectedStock ?? "";  // Ensure it's at least an empty string
   
+  // --------------------------
+  // Chart Data & Options with Dual y-Axes
+  // --------------------------
+  
   const chartData = {
     labels: currentStockData ? xAxisLabels.slice(0, currentStockData.trend.length) : [],
     datasets: [
@@ -116,6 +120,7 @@ export default function Home() {
         borderColor: "rgba(75,192,192,1)",
         backgroundColor: "rgba(75,192,192,0.2)",
         fill: false,
+        yAxisID: "yTrend", // assign to left y-axis
       },
       {
         label: `${safeSelectedStock} Open Price`,
@@ -125,6 +130,7 @@ export default function Home() {
         borderColor: "rgba(255,99,132,1)",
         backgroundColor: "rgba(255,99,132,0.2)",
         fill: false,
+        yAxisID: "yOpen", // assign to right y-axis
       },
     ],
   };
@@ -134,6 +140,30 @@ export default function Home() {
     plugins: {
       legend: { position: "top" as const },
       title: { display: true, text: `${selectedStock} Trend Chart` },
+    },
+    scales: {
+      x: {
+        // Shared x-axis configuration if needed
+      },
+      yTrend: {
+        type: "linear",
+        position: "left",
+        title: {
+          display: true,
+          text: "Trend",
+        },
+      },
+      yOpen: {
+        type: "linear",
+        position: "right",
+        title: {
+          display: true,
+          text: "Open Price",
+        },
+        grid: {
+          drawOnChartArea: false, // prevents grid lines from appearing on the right y-axis
+        },
+      },
     },
   };
 
@@ -153,49 +183,40 @@ export default function Home() {
           <table className="border-collapse border border-gray-700 w-full">
             <thead>
               <tr className="bg-gray-800 text-center">
-                <th
-                  className="border border-gray-700 p-1 cursor-pointer text-center w-5"
-                  onClick={() => handleSort("id")}
-                >
+                <th className="border border-gray-700 p-1 text-center w-5" onClick={() => handleSort("id")}>
                   ID
                 </th>
-                <th
-                  className="border border-gray-700 p-1 cursor-pointer text-center w-5"
-                  onClick={() => handleSort("name")}
-                >
+                <th className="border border-gray-700 p-1 text-center w-5" onClick={() => handleSort("name")}>
                   Stock
                 </th>
-                <th
-                  className="border border-gray-700 p-1 cursor-pointer text-center w-5"
-                  onClick={() => handleSort("value")}
-                >
+                <th className="border border-gray-700 p-1 text-center w-5" onClick={() => handleSort("value")}>
                   Price
                 </th>
                 <th className="border border-gray-700 p-1 text-center w-5">Open</th>
                 <th className="border border-gray-700 p-1 text-center w-5">High</th>
-                <th className="border border-gray-700 p-1 text-center w-20">Trend</th>
+                <th className="border border-gray-700 p-0 text-center w-20">Trend</th>
               </tr>
             </thead>
             <tbody>
               {stockData.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-800 text-center">
-                  <td className="border border-gray-700 p-1 w-5">{item.id}</td>
+                  <td className="border border-gray-700 p-1 text-center w-5">{item.id}</td>
                   <td
-                    className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline w-5"
+                    className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline text-center w-5"
                     onClick={() => handleStockSelect(item.name)}
                   >
                     {item.name}
                   </td>
-                  <td className="border border-gray-700 p-1 w-5">
+                  <td className="border border-gray-700 p-1 text-center w-5">
                     ${item.value.toFixed(2)}
                   </td>
-                  <td className="border border-gray-700 p-1 w-5">
+                  <td className="border border-gray-700 p-1 text-center w-5">
                     {additionalData[item.name]?.open ?? '-'}
                   </td>
-                  <td className="border border-gray-700 p-1 w-5">
+                  <td className="border border-gray-700 p-1 text-center w-5">
                     {additionalData[item.name]?.high ?? '-'}
                   </td>
-                  <td className="border border-gray-700 p-0 w-20">
+                  <td className="border border-gray-700 p-0 text-center w-20">
                     <div className="w-full h-full">
                       <Sparklines data={item.trend}>
                         <SparklinesLine color="white" />
@@ -229,10 +250,10 @@ export default function Home() {
               </thead>
               <tbody>
                 <tr className="hover:bg-gray-800">
-                  <td className="border border-gray-700 p-2">{additionalData[selectedStock].open}</td>
-                  <td className="border border-gray-700 p-2">{additionalData[selectedStock].high}</td>
-                  <td className="border border-gray-700 p-2">{additionalData[selectedStock].low}</td>
-                  <td className="border border-gray-700 p-2">{additionalData[selectedStock].volume}</td>
+                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].open}</td>
+                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].high}</td>
+                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].low}</td>
+                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].volume}</td>
                 </tr>
               </tbody>
             </table>
