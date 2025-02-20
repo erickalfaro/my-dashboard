@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params, searchParams: _searchParams }: { params: { ticker: string }, searchParams: URLSearchParams }
+  { params }: { params: { ticker: string } }
 ) {
-  // Mark the unused searchParams as used to silence ESLint:
-  void _searchParams;
-
   const ticker = params.ticker;
   // Simulate processing delay
   await new Promise((resolve) => setTimeout(resolve, 10));
