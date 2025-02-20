@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  context: { params: Record<string, string> }
+  { params }: { params: { ticker: string } }
 ) {
-  const { ticker } = context.params;
+  const { ticker } = params;
   // Simulate processing delay
   await new Promise((resolve) => setTimeout(resolve, 10));
 
