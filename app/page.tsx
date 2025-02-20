@@ -33,7 +33,6 @@ interface DataItem {
 const API_URL = "/api/mockdata";
 
 // Dummy additional data for each stock symbol.
-// In the future, this can be replaced or merged with real API data.
 const additionalData: Record<string, { open: number; high: number; low: number; volume: number }> = {
   AAPL: { open: 170, high: 175, low: 168, volume: 5000000 },
   TSLA: { open: 800, high: 830, low: 790, volume: 3000000 },
@@ -41,6 +40,13 @@ const additionalData: Record<string, { open: number; high: number; low: number; 
   GOOGL: { open: 140, high: 145, low: 138, volume: 4000000 },
   AMZN: { open: 125, high: 130, low: 123, volume: 3500000 },
 };
+
+// Define x-axis labels (15 items to match the trend array length)
+const xAxisLabels = [
+  "Label 1", "Label 2", "Label 3", "Label 4", "Label 5",
+  "Label 6", "Label 7", "Label 8", "Label 9", "Label 10",
+  "Label 11", "Label 12", "Label 13", "Label 14", "Label 15"
+];
 
 // --------------------------
 // Main Component
@@ -106,13 +112,22 @@ export default function Home() {
   // --------------------------
 
   const chartData = {
-    labels: currentStockData ? currentStockData.trend.map((_, index) => `Point ${index + 1}`) : [],
+    labels: currentStockData ? xAxisLabels.slice(0, currentStockData.trend.length) : [],
     datasets: [
       {
         label: `${selectedStock} Trend`,
         data: currentStockData ? currentStockData.trend : [],
         borderColor: "rgba(75,192,192,1)",
         backgroundColor: "rgba(75,192,192,0.2)",
+        fill: false,
+      },
+      {
+        label: `${selectedStock} Open Price`,
+        data: currentStockData && additionalData[selectedStock]
+          ? Array(currentStockData.trend.length).fill(additionalData[selectedStock].open)
+          : [],
+        borderColor: "rgba(255,99,132,1)",
+        backgroundColor: "rgba(255,99,132,0.2)",
         fill: false,
       },
     ],
@@ -132,7 +147,6 @@ export default function Home() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
-      {/* <h1 className="text-2xl font-bold mb-4">Stock Data Table</h1> */}
       <button onClick={fetchData} className="p-2 bg-blue-500 text-white rounded mb-4">
         Refresh Data
       </button>
@@ -140,33 +154,35 @@ export default function Home() {
         <p>Loading...</p>
       ) : (
         <div className="table-container">
-          <table className="border-collapse border border-gray-700 w-full text-center">
+          <table className="border-collapse border border-gray-700 w-full">
             <thead>
-              <tr className="bg-gray-800">
+              <tr className="bg-gray-800 text-center">
                 <th
-                  className="border border-gray-700 p-1 cursor-pointer w-5"
+                  className="border border-gray-700 p-1 cursor-pointer text-center w-5"
                   onClick={() => handleSort("id")}
                 >
                   ID
                 </th>
                 <th
-                  className="border border-gray-700 p-1 cursor-pointer w-5"
+                  className="border border-gray-700 p-1 cursor-pointer text-center w-5"
                   onClick={() => handleSort("name")}
                 >
                   Stock
                 </th>
                 <th
-                  className="border border-gray-700 p-1 cursor-pointer w-5"
+                  className="border border-gray-700 p-1 cursor-pointer text-center w-5"
                   onClick={() => handleSort("value")}
                 >
                   Price
                 </th>
-                <th className="border border-gray-700 p-1 w-20">Trend</th>
+                <th className="border border-gray-700 p-1 text-center w-5">Open</th>
+                <th className="border border-gray-700 p-1 text-center w-5">High</th>
+                <th className="border border-gray-700 p-1 text-center w-20">Trend</th>
               </tr>
             </thead>
             <tbody>
               {stockData.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-800">
+                <tr key={item.id} className="hover:bg-gray-800 text-center">
                   <td className="border border-gray-700 p-1 w-5">{item.id}</td>
                   <td
                     className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline w-5"
@@ -176,6 +192,12 @@ export default function Home() {
                   </td>
                   <td className="border border-gray-700 p-1 w-5">
                     ${item.value.toFixed(2)}
+                  </td>
+                  <td className="border border-gray-700 p-1 w-5">
+                    {additionalData[item.name]?.open ?? '-'}
+                  </td>
+                  <td className="border border-gray-700 p-1 w-5">
+                    {additionalData[item.name]?.high ?? '-'}
                   </td>
                   <td className="border border-gray-700 p-0 w-20">
                     <div className="w-full h-full">
@@ -191,7 +213,6 @@ export default function Home() {
         </div>
       )}
 
-
       {selectedStock && (
         <div className="mt-6">
           <p className="mt-4 text-lg">
@@ -204,10 +225,10 @@ export default function Home() {
             <table className="border-collapse border border-gray-700 w-full text-center mt-2">
               <thead>
                 <tr className="bg-gray-800">
-                  <th className="border border-gray-700 p-2">Open</th>
-                  <th className="border border-gray-700 p-2">High</th>
-                  <th className="border border-gray-700 p-2">Low</th>
-                  <th className="border border-gray-700 p-2">Volume</th>
+                  <th className="border border-gray-700 p-2 text-center">Open</th>
+                  <th className="border border-gray-700 p-2 text-center">High</th>
+                  <th className="border border-gray-700 p-2 text-center">Low</th>
+                  <th className="border border-gray-700 p-2 text-center">Volume</th>
                 </tr>
               </thead>
               <tbody>
