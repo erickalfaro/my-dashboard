@@ -1,33 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-
 import { NextResponse } from "next/server";
 
-// 1. Create a type that describes the shape you want
 type ContextParams = {
   params: {
     ticker: string;
   };
 };
 
-export async function GET(
-  req: Request,
-  ctx: unknown // Let Next pass you a context object
-) {
-  // 2. Cast from unknown to our context type
-  const { params } = ctx as ContextParams; 
+export async function GET(req: Request, ctx: unknown) {
+  // Cast 'ctx' to the context type so we can extract params.
+  const { params } = ctx as ContextParams;
   const { ticker } = params;
 
-  // Simulate processing delay
-  await new Promise((resolve) => setTimeout(resolve, 10));
-
-  // Generate 20 data points for each series (line and bar)
-  const lineData = Array.from({ length: 20 }, () =>
-    Number((Math.random() * 100 + 100).toFixed(2))
-  );
-  const barData = Array.from({ length: 20 }, () =>
-    Number((Math.random() * 50 + 50).toFixed(2))
-  );
-
-  return NextResponse.json({ ticker, lineData, barData });
+  // Return a simple static JSON object.
+  return NextResponse.json({
+    ticker,
+    lineData: [101, 102, 103, 104, 105],
+    barData: [10, 12, 15, 14, 18],
+  });
 }
