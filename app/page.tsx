@@ -30,7 +30,8 @@ interface DataItem {
 }
 
 // Use the actual API endpoint instead of local mock data.
-const API_URL = "https://cashdash.free.beeceptor.com/todos";
+// const API_URL = "https://cashdash.free.beeceptor.com/todos";
+const API_URL = "/api/mockdata";
 
 // Dummy additional data for each stock symbol.
 const additionalData: Record<string, { open: number; high: number; low: number; volume: number }> = {
