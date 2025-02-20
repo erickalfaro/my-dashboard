@@ -29,18 +29,11 @@ interface DataItem {
   trend: number[];
 }
 
-// Use the actual API endpoint instead of local mock data.
-// const API_URL = "https://cashdash.free.beeceptor.com/todos";
-const API_URL = "/api/mockdata";
-
-// Dummy additional data for each stock symbol.
-const additionalData: Record<string, { open: number; high: number; low: number; volume: number }> = {
-  AAPL: { open: 170, high: 175, low: 168, volume: 5000000 },
-  TSLA: { open: 800, high: 830, low: 790, volume: 3000000 },
-  NVDA: { open: 490, high: 515, low: 485, volume: 2500000 },
-  GOOGL: { open: 140, high: 145, low: 138, volume: 4000000 },
-  AMZN: { open: 125, high: 130, low: 123, volume: 3500000 },
-};
+// External API endpoint for stock data.
+//const STOCK_API_URL = "https://cashdash.free.beeceptor.com/todos";
+const STOCK_API_URL = "/api/mockdata";
+// Local API endpoint for dummy additional data.
+const ADDITIONAL_DATA_API_URL = "/api/additionalData";
 
 // Define x-axis labels (15 items to match the trend array length)
 const xAxisLabels = [
@@ -55,6 +48,7 @@ const xAxisLabels = [
 
 export default function Home() {
   const [stockData, setStockData] = useState<DataItem[]>([]);
+  const [additionalData, setAdditionalData] = useState<Record<string, { open: number; high: number; low: number; volume: number }> | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [sortColumn, setSortColumn] = useState<keyof DataItem | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -64,10 +58,10 @@ export default function Home() {
   // API Data Fetching
   // --------------------------
 
-  const fetchData = async (): Promise<void> => {
+  const fetchStockData = async (): Promise<void> => {
     setLoading(true);
     try {
-      const response = await axios.get<DataItem[]>(API_URL);
+      const response = await axios.get<DataItem[]>(STOCK_API_URL);
       setStockData(response.data);
     } catch (error) {
       console.error("Error fetching stock data:", error);
@@ -76,8 +70,18 @@ export default function Home() {
     }
   };
 
+  const fetchAdditionalData = async (): Promise<void> => {
+    try {
+      const response = await axios.get<Record<string, { open: number; high: number; low: number; volume: number }>>(ADDITIONAL_DATA_API_URL);
+      setAdditionalData(response.data);
+    } catch (error) {
+      console.error("Error fetching additional data:", error);
+    }
+  };
+
   useEffect(() => {
-    fetchData();
+    fetchStockData();
+    fetchAdditionalData();
   }, []);
 
   // --------------------------
@@ -125,7 +129,7 @@ export default function Home() {
       },
       {
         label: `${safeSelectedStock} Open Price`,
-        data: currentStockData && additionalData[safeSelectedStock]
+        data: currentStockData && additionalData && additionalData[safeSelectedStock]
           ? Array(currentStockData.trend.length).fill(additionalData[safeSelectedStock].open)
           : [],
         borderColor: "rgba(255,99,132,1)",
@@ -174,7 +178,7 @@ export default function Home() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
-      <button onClick={fetchData} className="p-2 bg-blue-500 text-white rounded mb-4">
+      <button onClick={() => { fetchStockData(); fetchAdditionalData(); }} className="p-2 bg-blue-500 text-white rounded mb-4">
         Refresh Data
       </button>
       {loading ? (
@@ -212,10 +216,10 @@ export default function Home() {
                     ${item.value.toFixed(2)}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-5">
-                    {additionalData[item.name]?.open ?? '-'}
+                    {additionalData && additionalData[item.name]?.open ?? '-'}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-5">
-                    {additionalData[item.name]?.high ?? '-'}
+                    {additionalData && additionalData[item.name]?.high ?? '-'}
                   </td>
                   <td className="border border-gray-700 p-0 text-center w-20">
                     <div className="w-full h-full">
@@ -239,7 +243,7 @@ export default function Home() {
 
           {/* Additional Data Table */}
           <h2 className="text-xl font-semibold mt-4">Additional Data for {selectedStock}</h2>
-          {additionalData[selectedStock] ? (
+          {additionalData && additionalData[selectedStock] ? (
             <table className="border-collapse border border-gray-700 w-full text-center mt-2">
               <thead>
                 <tr className="bg-gray-800">
