@@ -3,24 +3,34 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Sparklines, SparklinesLine } from "react-sparklines";
-import { Line } from "react-chartjs-2";
+import { Chart } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
 import { ChartOptions } from "chart.js";
 
-// Register Chart.js modules
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+// Register Chart.js modules for mixed chart types
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 // --------------------------
-// Type Definitions & Constants
+// Type Definitions & Endpoint Constants
 // --------------------------
 
 interface DataItem {
@@ -38,29 +48,32 @@ interface AdditionalData {
   daysTillEarnings: number;
 }
 
-// External API endpoints
+interface TickerChartData {
+  ticker: string;
+  lineData: number[];
+  barData: number[];
+}
+
+// const STOCK_API_URL = "https://cashdash.free.beeceptor.com/todos";
 const STOCK_API_URL = "/api/mockdata";
 const ADDITIONAL_DATA_API_URL = "/api/additionalData";
-
-// Define x-axis labels (15 items to match the trend array length)
-const xAxisLabels = [
-  "Label 1", "Label 2", "Label 3", "Label 4", "Label 5",
-  "Label 6", "Label 7", "Label 8", "Label 9", "Label 10",
-  "Label 11", "Label 12", "Label 13", "Label 14", "Label 15"
-];
+const TICKER_API_URL = "/api/ticker"; // Detailed info endpoint
+const SERIES_API_URL = "/api/series"; // Series (plot) endpoint
 
 // --------------------------
 // Main Component
 // --------------------------
 
 export default function Home() {
+  // Data for stock table and additional info
   const [stockData, setStockData] = useState<DataItem[]>([]);
   const [additionalData, setAdditionalData] = useState<Record<string, AdditionalData> | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // State for ticker API response and selection
+  // State for detailed ticker info and series chart data
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [tickerResponse, setTickerResponse] = useState<string>("");
+  const [seriesChartData, setSeriesChartData] = useState<TickerChartData | null>(null);
   const [tickerLoading, setTickerLoading] = useState<boolean>(false);
 
   // --------------------------
@@ -94,28 +107,87 @@ export default function Home() {
   }, []);
 
   // --------------------------
-  // Event Handlers
+  // Event Handler for Ticker Click (runs API calls in parallel)
   // --------------------------
 
-  // Handler for ticker clicks
   const handleTickerClick = async (ticker: string): Promise<void> => {
     setTickerLoading(true);
-    setTickerResponse(""); // clear previous message
+    setTickerResponse(""); // Clear previous detailed info
     setSelectedStock(ticker);
     try {
-      const response = await axios.get<{ message: string }>(`/api/ticker/${ticker}`);
-      setTickerResponse(response.data.message);
+      // Initiate both API calls concurrently
+      const detailedPromise = axios.get<{ message: string }>(`${TICKER_API_URL}/${ticker}`);
+      const seriesPromise = axios.get<TickerChartData>(`${SERIES_API_URL}/${ticker}`);
+      const [detailedResponse, seriesResponse] = await Promise.all([detailedPromise, seriesPromise]);
+
+      setTickerResponse(detailedResponse.data.message);
+      setSeriesChartData(seriesResponse.data);
     } catch (error) {
-      console.error("Error fetching ticker info:", error);
+      console.error("Error fetching ticker data:", error);
       setTickerResponse("Error fetching ticker info.");
+      setSeriesChartData(null);
     } finally {
       setTickerLoading(false);
     }
   };
 
-  // (Optional) Example sort handler for the stock table
+  // --------------------------
+  // Chart Data & Options for the Series Plot
+  // --------------------------
+
+  const seriesChartConfig = seriesChartData
+    ? {
+        labels: Array.from({ length: seriesChartData.lineData.length }, (_, i) => `Label ${i + 1}`),
+        datasets: [
+          {
+            type: "line" as const,
+            label: `${seriesChartData.ticker} Line Series`,
+            data: seriesChartData.lineData,
+            borderColor: "rgba(75,192,192,1)",
+            backgroundColor: "rgba(75,192,192,0.2)",
+            fill: false,
+            yAxisID: "yLine",
+          },
+          {
+            type: "bar" as const,
+            label: `${seriesChartData.ticker} Bar Series`,
+            data: seriesChartData.barData,
+            borderColor: "rgba(255,99,132,1)",
+            backgroundColor: "rgba(255,99,132,0.2)",
+            yAxisID: "yBar",
+          },
+        ],
+      }
+    : null;
+
+  const chartOptions: ChartOptions<"bar" | "line"> = {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" },
+      title: { display: true, text: `${selectedStock} Series Chart` },
+    },
+    scales: {
+      x: { type: "category" as const },
+      yLine: {
+        type: "linear" as const,
+        position: "left" as const,
+        title: { display: true, text: "Line Series" },
+      },
+      yBar: {
+        type: "linear" as const,
+        position: "right" as const,
+        title: { display: true, text: "Bar Series" },
+        grid: { drawOnChartArea: false },
+      },
+    },
+  };
+
+  // --------------------------
+  // (Optional) Sort Handler for Stock Table
+  // --------------------------
+
   const handleSort = (column: keyof DataItem): void => {
-    const newDirection: "asc" | "desc" = "asc"; // Simplified for brevity
+    const newDirection: "asc" | "desc" = "asc";
     setStockData((prevData) => {
       const sortedData = [...prevData].sort((a, b) => {
         if (a[column] > b[column]) return newDirection === "asc" ? 1 : -1;
@@ -124,57 +196,6 @@ export default function Home() {
       });
       return sortedData;
     });
-  };
-
-  // --------------------------
-  // Chart Data & Options with Dual y-Axes
-  // --------------------------
-
-  const currentStockData = stockData.find((item) => item.name === selectedStock);
-  const safeSelectedStock = selectedStock ?? "";
-
-  const chartData = {
-    labels: currentStockData ? xAxisLabels.slice(0, currentStockData.trend.length) : [],
-    datasets: [
-      {
-        label: `${safeSelectedStock} Trend`,
-        data: currentStockData ? currentStockData.trend : [],
-        borderColor: "rgba(75,192,192,1)",
-        backgroundColor: "rgba(75,192,192,0.2)",
-        fill: false,
-        yAxisID: "yTrend",
-      },
-      {
-        label: `${safeSelectedStock} Open Price`,
-        data: currentStockData ? Array(currentStockData.trend.length).fill(currentStockData.open) : [],
-        borderColor: "rgba(255,99,132,1)",
-        backgroundColor: "rgba(255,99,132,0.2)",
-        fill: false,
-        yAxisID: "yOpen",
-      },
-    ],
-  };
-
-  const chartOptions: ChartOptions<"line"> = {
-    responsive: true,
-    plugins: {
-      legend: { position: "top" },
-      title: { display: true, text: `${selectedStock} Trend Chart` },
-    },
-    scales: {
-      x: { type: "category" as const },
-      yTrend: {
-        type: "linear" as const,
-        position: "left" as const,
-        title: { display: true, text: "Trend" },
-      },
-      yOpen: {
-        type: "linear" as const,
-        position: "right" as const,
-        title: { display: true, text: "Open Price" },
-        grid: { drawOnChartArea: false },
-      },
-    },
   };
 
   // --------------------------
@@ -194,7 +215,7 @@ export default function Home() {
       </button>
 
       {loading ? (
-        <p>Loading...</p>
+        <p>Loading stock data...</p>
       ) : (
         <div className="table-container">
           <table className="border-collapse border border-gray-700 w-full">
@@ -224,15 +245,9 @@ export default function Home() {
                   >
                     {item.name}
                   </td>
-                  <td className="border border-gray-700 p-1 text-center w-5">
-                    ${item.value.toFixed(2)}
-                  </td>
-                  <td className="border border-gray-700 p-1 text-center w-5">
-                    {item.open !== undefined ? item.open : "-"}
-                  </td>
-                  <td className="border border-gray-700 p-1 text-center w-5">
-                    {item.high !== undefined ? item.high : "-"}
-                  </td>
+                  <td className="border border-gray-700 p-1 text-center w-5">${item.value.toFixed(2)}</td>
+                  <td className="border border-gray-700 p-1 text-center w-5">{item.open !== undefined ? item.open : "-"}</td>
+                  <td className="border border-gray-700 p-1 text-center w-5">{item.high !== undefined ? item.high : "-"}</td>
                   <td className="border border-gray-700 p-0 text-center w-20">
                     <div className="w-full h-full">
                       <Sparklines data={item.trend}>
@@ -249,11 +264,13 @@ export default function Home() {
 
       {selectedStock && (
         <div className="mt-6">
-          {/* New Summary (Ticker API Response) */}
+          {/* Detailed Info Section */}
           {tickerLoading ? (
             <p>Loading ticker data...</p>
           ) : (
-            <p className="mt-4 text-lg">{tickerResponse || "Click on a ticker symbol to see detailed info."}</p>
+            <p className="mt-4 text-lg">
+              {tickerResponse || "Click on a ticker symbol to see detailed info."}
+            </p>
           )}
 
           {/* Additional Data Table */}
@@ -269,9 +286,15 @@ export default function Home() {
               </thead>
               <tbody>
                 <tr className="hover:bg-gray-800">
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].marketCap}</td>
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].companyDescription}</td>
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].daysTillEarnings}</td>
+                  <td className="border border-gray-700 p-2 text-center">
+                    {additionalData[selectedStock].marketCap}
+                  </td>
+                  <td className="border border-gray-700 p-2 text-center">
+                    {additionalData[selectedStock].companyDescription}
+                  </td>
+                  <td className="border border-gray-700 p-2 text-center">
+                    {additionalData[selectedStock].daysTillEarnings}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -279,11 +302,12 @@ export default function Home() {
             <p>No additional data available for {selectedStock}</p>
           )}
 
-          {/* Trend Chart */}
-          {currentStockData && currentStockData.trend.length > 0 && (
+          {/* Series Chart Section */}
+          {seriesChartData && seriesChartConfig && (
             <div className="mt-6">
-              <h2 className="text-xl font-semibold">Trend Chart</h2>
-              <Line data={chartData} options={chartOptions} />
+              <h2 className="text-xl font-semibold">Series Chart</h2>
+              {/* Provide a default "type" prop; datasets override this as needed */}
+              <Chart type="bar" data={seriesChartConfig} options={chartOptions} />
             </div>
           )}
         </div>

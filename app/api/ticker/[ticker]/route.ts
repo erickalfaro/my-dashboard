@@ -5,7 +5,7 @@ export async function GET(
   ) {
     const { ticker } = params;
     // Simulate some processing delay if desired
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 10));
     
     return new Response(
       JSON.stringify({ message: `Mock response for ${ticker}: Detailed info about ${ticker}.` }),
