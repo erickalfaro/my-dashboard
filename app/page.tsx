@@ -14,6 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { ChartOptions } from "chart.js";
 
 // Register Chart.js modules
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -141,27 +142,28 @@ export default function Home() {
     ],
   };
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<"line"> = {
     responsive: true,
     plugins: {
-      legend: { position: "top" as const },
+      legend: { position: "top" },
       title: { display: true, text: `${selectedStock} Trend Chart` },
     },
     scales: {
       x: {
-        // Shared x-axis configuration if needed
+        // Ensure the x-axis is interpreted as a category axis
+        type: "category" as const,
       },
       yTrend: {
-        type: "linear",
-        position: "left",
+        type: "linear" as const,
+        position: "left" as const,
         title: {
           display: true,
           text: "Trend",
         },
       },
       yOpen: {
-        type: "linear",
-        position: "right",
+        type: "linear" as const,
+        position: "right" as const,
         title: {
           display: true,
           text: "Open Price",
