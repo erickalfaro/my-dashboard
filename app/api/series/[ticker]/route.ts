@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params, searchParams }: { params: { ticker: string }, searchParams: URLSearchParams }
+  { params, searchParams: _searchParams }: { params: { ticker: string }, searchParams: URLSearchParams }
 ) {
   const ticker = params.ticker;
   // Simulate processing delay
