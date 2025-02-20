@@ -6,6 +6,8 @@ import { Sparklines, SparklinesLine } from "react-sparklines";
 import { Chart } from "react-chartjs-2";
 import {
   Chart as ChartJS,
+  LineController,
+  BarController,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -15,10 +17,13 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+
 import { ChartOptions } from "chart.js";
 
 // Register Chart.js modules for mixed chart types
 ChartJS.register(
+  LineController,   // <-- needed for a "line" type chart
+  BarController,    // <-- needed for a "bar" type chart
   CategoryScale,
   LinearScale,
   PointElement,
