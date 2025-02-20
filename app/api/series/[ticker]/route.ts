@@ -2,10 +2,9 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { ticker: string | string[] } }
+  { params }: { params: { ticker: string } }
 ) {
-  // Ensure ticker is a string
-  const ticker = Array.isArray(params.ticker) ? params.ticker[0] : params.ticker;
+  const { ticker } = params;
   // Simulate processing delay
   await new Promise((resolve) => setTimeout(resolve, 10));
 
