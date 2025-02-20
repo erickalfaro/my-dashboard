@@ -139,42 +139,58 @@ export default function Home() {
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <table className="border-collapse border border-gray-700 w-full text-center">
-          <thead>
-            <tr className="bg-gray-800">
-              <th className="border border-gray-700 p-2 cursor-pointer" onClick={() => handleSort("id")}>
-                ID
-              </th>
-              <th className="border border-gray-700 p-2 cursor-pointer" onClick={() => handleSort("name")}>
-                Stock
-              </th>
-              <th className="border border-gray-700 p-2 cursor-pointer" onClick={() => handleSort("value")}>
-                Price
-              </th>
-              <th className="border border-gray-700 p-2">Trend</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stockData.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-800">
-                <td className="border border-gray-700 p-2">{item.id}</td>
-                <td
-                  className="border border-gray-700 p-2 cursor-pointer text-blue-400 hover:underline"
-                  onClick={() => handleStockSelect(item.name)}
+        <div className="table-container">
+          <table className="border-collapse border border-gray-700 w-full text-center">
+            <thead>
+              <tr className="bg-gray-800">
+                <th
+                  className="border border-gray-700 p-1 cursor-pointer w-10"
+                  onClick={() => handleSort("id")}
                 >
-                  {item.name}
-                </td>
-                <td className="border border-gray-700 p-2">${item.value.toFixed(2)}</td>
-                <td className="border border-gray-700 p-2">
-                  <Sparklines data={item.trend} width={100} height={20}>
-                    <SparklinesLine color="blue" />
-                  </Sparklines>
-                </td>
+                  ID
+                </th>
+                <th
+                  className="border border-gray-700 p-1 cursor-pointer w-20"
+                  onClick={() => handleSort("name")}
+                >
+                  Stock
+                </th>
+                <th
+                  className="border border-gray-700 p-1 cursor-pointer w-20"
+                  onClick={() => handleSort("value")}
+                >
+                  Price
+                </th>
+                <th className="border border-gray-700 p-1 w-20">Trend</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {stockData.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-800">
+                  <td className="border border-gray-700 p-1 w-10">{item.id}</td>
+                  <td
+                    className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline w-20"
+                    onClick={() => handleStockSelect(item.name)}
+                  >
+                    {item.name}
+                  </td>
+                  <td className="border border-gray-700 p-1 w-20">
+                    ${item.value.toFixed(2)}
+                  </td>
+                  <td className="border border-gray-700 p-0 w-20">
+                    <div className="w-full h-full">
+                      <Sparklines data={item.trend}>
+                        <SparklinesLine color="white" />
+                      </Sparklines>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
+
 
       {selectedStock && (
         <div className="mt-6">
