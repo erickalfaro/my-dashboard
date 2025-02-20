@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { ticker: string } }
+  { params, searchParams }: { params: { ticker: string }, searchParams: URLSearchParams }
 ) {
   const ticker = params.ticker;
   // Simulate processing delay
