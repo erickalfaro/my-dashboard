@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { ticker: string } }
 ) {
-  const { ticker } = params;
+  const ticker = params.ticker;
   // Simulate processing delay
   await new Promise((resolve) => setTimeout(resolve, 10));
 
