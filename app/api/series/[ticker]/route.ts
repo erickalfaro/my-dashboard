@@ -1,10 +1,12 @@
+// app/api/series/[ticker]/route.ts
 import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: { ticker: string } }
+  context: { params: { ticker: string } }
 ) {
-  const ticker = params.ticker;
+  const { ticker } = context.params;
+
   // Simulate processing delay
   await new Promise((resolve) => setTimeout(resolve, 10));
 
