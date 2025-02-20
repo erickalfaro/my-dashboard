@@ -32,11 +32,14 @@ interface DataItem {
   high: number;
 }
 
+interface AdditionalData {
+  marketCap: string;
+  companyDescription: string;
+  daysTillEarnings: number;
+}
 
-// External API endpoint for stock data.
-//const STOCK_API_URL = "https://cashdash.free.beeceptor.com/todos";
+// External API endpoints
 const STOCK_API_URL = "/api/mockdata";
-// Local API endpoint for dummy additional data.
 const ADDITIONAL_DATA_API_URL = "/api/additionalData";
 
 // Define x-axis labels (15 items to match the trend array length)
@@ -52,11 +55,13 @@ const xAxisLabels = [
 
 export default function Home() {
   const [stockData, setStockData] = useState<DataItem[]>([]);
-  const [additionalData, setAdditionalData] = useState<Record<string, { open: number; high: number; low: number; volume: number }> | null>(null);
+  const [additionalData, setAdditionalData] = useState<Record<string, AdditionalData> | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [sortColumn, setSortColumn] = useState<keyof DataItem | null>(null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // State for ticker API response and selection
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
+  const [tickerResponse, setTickerResponse] = useState<string>("");
+  const [tickerLoading, setTickerLoading] = useState<boolean>(false);
 
   // --------------------------
   // API Data Fetching
@@ -76,7 +81,7 @@ export default function Home() {
 
   const fetchAdditionalData = async (): Promise<void> => {
     try {
-      const response = await axios.get<Record<string, { open: number; high: number; low: number; volume: number }>>(ADDITIONAL_DATA_API_URL);
+      const response = await axios.get<Record<string, AdditionalData>>(ADDITIONAL_DATA_API_URL);
       setAdditionalData(response.data);
     } catch (error) {
       console.error("Error fetching additional data:", error);
@@ -92,12 +97,25 @@ export default function Home() {
   // Event Handlers
   // --------------------------
 
-  const handleSort = (column: keyof DataItem): void => {
-    const isSameColumn = sortColumn === column;
-    const newDirection: "asc" | "desc" = isSameColumn && sortDirection === "asc" ? "desc" : "asc";
-    setSortColumn(column);
-    setSortDirection(newDirection);
+  // Handler for ticker clicks
+  const handleTickerClick = async (ticker: string): Promise<void> => {
+    setTickerLoading(true);
+    setTickerResponse(""); // clear previous message
+    setSelectedStock(ticker);
+    try {
+      const response = await axios.get<{ message: string }>(`/api/ticker/${ticker}`);
+      setTickerResponse(response.data.message);
+    } catch (error) {
+      console.error("Error fetching ticker info:", error);
+      setTickerResponse("Error fetching ticker info.");
+    } finally {
+      setTickerLoading(false);
+    }
+  };
 
+  // (Optional) Example sort handler for the stock table
+  const handleSort = (column: keyof DataItem): void => {
+    const newDirection: "asc" | "desc" = "asc"; // Simplified for brevity
     setStockData((prevData) => {
       const sortedData = [...prevData].sort((a, b) => {
         if (a[column] > b[column]) return newDirection === "asc" ? 1 : -1;
@@ -108,18 +126,13 @@ export default function Home() {
     });
   };
 
-  const handleStockSelect = (stockName: string): void => {
-    console.log("Selected Stock:", stockName);
-    setSelectedStock(stockName);
-  };
-
-  const currentStockData = stockData.find((item) => item.name === selectedStock);
-  const safeSelectedStock = selectedStock ?? "";  // Ensure it's at least an empty string
-  
   // --------------------------
   // Chart Data & Options with Dual y-Axes
   // --------------------------
-  
+
+  const currentStockData = stockData.find((item) => item.name === selectedStock);
+  const safeSelectedStock = selectedStock ?? "";
+
   const chartData = {
     labels: currentStockData ? xAxisLabels.slice(0, currentStockData.trend.length) : [],
     datasets: [
@@ -129,7 +142,7 @@ export default function Home() {
         borderColor: "rgba(75,192,192,1)",
         backgroundColor: "rgba(75,192,192,0.2)",
         fill: false,
-        yAxisID: "yTrend", // assign to left y-axis
+        yAxisID: "yTrend",
       },
       {
         label: `${safeSelectedStock} Open Price`,
@@ -149,28 +162,17 @@ export default function Home() {
       title: { display: true, text: `${selectedStock} Trend Chart` },
     },
     scales: {
-      x: {
-        // Ensure the x-axis is interpreted as a category axis
-        type: "category" as const,
-      },
+      x: { type: "category" as const },
       yTrend: {
         type: "linear" as const,
         position: "left" as const,
-        title: {
-          display: true,
-          text: "Trend",
-        },
+        title: { display: true, text: "Trend" },
       },
       yOpen: {
         type: "linear" as const,
         position: "right" as const,
-        title: {
-          display: true,
-          text: "Open Price",
-        },
-        grid: {
-          drawOnChartArea: false, // prevents grid lines from appearing on the right y-axis
-        },
+        title: { display: true, text: "Open Price" },
+        grid: { drawOnChartArea: false },
       },
     },
   };
@@ -181,9 +183,16 @@ export default function Home() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
-      <button onClick={() => { fetchStockData(); fetchAdditionalData(); }} className="p-2 bg-blue-500 text-white rounded mb-4">
+      <button
+        onClick={() => {
+          fetchStockData();
+          fetchAdditionalData();
+        }}
+        className="p-2 bg-blue-500 text-white rounded mb-4"
+      >
         Refresh Data
       </button>
+
       {loading ? (
         <p>Loading...</p>
       ) : (
@@ -211,7 +220,7 @@ export default function Home() {
                   <td className="border border-gray-700 p-1 text-center w-5">{item.id}</td>
                   <td
                     className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline text-center w-5"
-                    onClick={() => handleStockSelect(item.name)}
+                    onClick={() => handleTickerClick(item.name)}
                   >
                     {item.name}
                   </td>
@@ -219,10 +228,10 @@ export default function Home() {
                     ${item.value.toFixed(2)}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-5">
-                    {item.open !== undefined ? item.open : '-'}
+                    {item.open !== undefined ? item.open : "-"}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-5">
-                    {item.high !== undefined ? item.high : '-'}
+                    {item.high !== undefined ? item.high : "-"}
                   </td>
                   <td className="border border-gray-700 p-0 text-center w-20">
                     <div className="w-full h-full">
@@ -240,9 +249,12 @@ export default function Home() {
 
       {selectedStock && (
         <div className="mt-6">
-          <p className="mt-4 text-lg">
-            Selected Stock: <span className="text-blue-400">{selectedStock}</span>
-          </p>
+          {/* New Summary (Ticker API Response) */}
+          {tickerLoading ? (
+            <p>Loading ticker data...</p>
+          ) : (
+            <p className="mt-4 text-lg">{tickerResponse || "Click on a ticker symbol to see detailed info."}</p>
+          )}
 
           {/* Additional Data Table */}
           <h2 className="text-xl font-semibold mt-4">Additional Data for {selectedStock}</h2>
@@ -250,18 +262,16 @@ export default function Home() {
             <table className="border-collapse border border-gray-700 w-full text-center mt-2">
               <thead>
                 <tr className="bg-gray-800">
-                  <th className="border border-gray-700 p-2 text-center">Open</th>
-                  <th className="border border-gray-700 p-2 text-center">High</th>
-                  <th className="border border-gray-700 p-2 text-center">Low</th>
-                  <th className="border border-gray-700 p-2 text-center">Volume</th>
+                  <th className="border border-gray-700 p-2 text-center">Market Cap</th>
+                  <th className="border border-gray-700 p-2 text-center">Description</th>
+                  <th className="border border-gray-700 p-2 text-center">Days Till Earnings</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="hover:bg-gray-800">
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].open}</td>
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].high}</td>
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].low}</td>
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].volume}</td>
+                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].marketCap}</td>
+                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].companyDescription}</td>
+                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].daysTillEarnings}</td>
                 </tr>
               </tbody>
             </table>
@@ -270,14 +280,12 @@ export default function Home() {
           )}
 
           {/* Trend Chart */}
-          <div className="mt-6">
-            <h2 className="text-xl font-semibold">Trend Chart</h2>
-            {currentStockData && currentStockData.trend.length > 0 ? (
+          {currentStockData && currentStockData.trend.length > 0 && (
+            <div className="mt-6">
+              <h2 className="text-xl font-semibold">Trend Chart</h2>
               <Line data={chartData} options={chartOptions} />
-            ) : (
-              <p>No trend data available for {selectedStock}</p>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
