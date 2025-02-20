@@ -132,7 +132,7 @@ export default function Home() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Stock Data Table</h1>
+      {/* <h1 className="text-2xl font-bold mb-4">Stock Data Table</h1> */}
       <button onClick={fetchData} className="p-2 bg-blue-500 text-white rounded mb-4">
         Refresh Data
       </button>
@@ -144,19 +144,19 @@ export default function Home() {
             <thead>
               <tr className="bg-gray-800">
                 <th
-                  className="border border-gray-700 p-1 cursor-pointer w-10"
+                  className="border border-gray-700 p-1 cursor-pointer w-5"
                   onClick={() => handleSort("id")}
                 >
                   ID
                 </th>
                 <th
-                  className="border border-gray-700 p-1 cursor-pointer w-20"
+                  className="border border-gray-700 p-1 cursor-pointer w-5"
                   onClick={() => handleSort("name")}
                 >
                   Stock
                 </th>
                 <th
-                  className="border border-gray-700 p-1 cursor-pointer w-20"
+                  className="border border-gray-700 p-1 cursor-pointer w-5"
                   onClick={() => handleSort("value")}
                 >
                   Price
@@ -167,14 +167,14 @@ export default function Home() {
             <tbody>
               {stockData.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-800">
-                  <td className="border border-gray-700 p-1 w-10">{item.id}</td>
+                  <td className="border border-gray-700 p-1 w-5">{item.id}</td>
                   <td
-                    className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline w-20"
+                    className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline w-5"
                     onClick={() => handleStockSelect(item.name)}
                   >
                     {item.name}
                   </td>
-                  <td className="border border-gray-700 p-1 w-20">
+                  <td className="border border-gray-700 p-1 w-5">
                     ${item.value.toFixed(2)}
                   </td>
                   <td className="border border-gray-700 p-0 w-20">
