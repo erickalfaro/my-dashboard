@@ -27,7 +27,10 @@ interface DataItem {
   name: string;
   value: number;
   trend: number[];
+  open: number;
+  high: number;
 }
+
 
 // External API endpoint for stock data.
 //const STOCK_API_URL = "https://cashdash.free.beeceptor.com/todos";
@@ -129,13 +132,11 @@ export default function Home() {
       },
       {
         label: `${safeSelectedStock} Open Price`,
-        data: currentStockData && additionalData && additionalData[safeSelectedStock]
-          ? Array(currentStockData.trend.length).fill(additionalData[safeSelectedStock].open)
-          : [],
+        data: currentStockData ? Array(currentStockData.trend.length).fill(currentStockData.open) : [],
         borderColor: "rgba(255,99,132,1)",
         backgroundColor: "rgba(255,99,132,0.2)",
         fill: false,
-        yAxisID: "yOpen", // assign to right y-axis
+        yAxisID: "yOpen",
       },
     ],
   };
@@ -216,10 +217,10 @@ export default function Home() {
                     ${item.value.toFixed(2)}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-5">
-                    {additionalData && additionalData[item.name]?.open ?? '-'}
+                    {item.open !== undefined ? item.open : '-'}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-5">
-                    {additionalData && additionalData[item.name]?.high ?? '-'}
+                    {item.high !== undefined ? item.high : '-'}
                   </td>
                   <td className="border border-gray-700 p-0 text-center w-20">
                     <div className="w-full h-full">
