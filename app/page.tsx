@@ -134,58 +134,117 @@ export default function Home() {
     }
   };
 
-  // --------------------------
+// --------------------------
   // Chart Data & Options
   // --------------------------
 
-  // In app/page.tsx, within the Home component
   const seriesChartConfig = seriesChartData
     ? {
         labels: Array.from({ length: seriesChartData.lineData.length }, (_, i) => {
           const date = new Date();
           date.setHours(date.getHours() - (seriesChartData.lineData.length - 1 - i));
-          return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          return date.toLocaleString([], {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
         }),
         datasets: [
           {
             type: "line" as const,
             label: `${seriesChartData.ticker} Hourly Price`,
             data: seriesChartData.lineData,
-            borderColor: "rgba(75,192,192,1)",
-            backgroundColor: "rgba(75,192,192,0.2)",
+            borderColor: "#00C805", // Green, common in stock charts for price
+            backgroundColor: "rgba(0, 200, 5, 0.1)",
             fill: false,
-            yAxisID: "yLine",
+            yAxisID: "yPrice",
+            tension: 0.1, // Slight curve for smoothness
+            pointRadius: 0, // Remove points for cleaner look
           },
           {
             type: "bar" as const,
             label: `${seriesChartData.ticker} Hourly Volume`,
             data: seriesChartData.barData,
-            borderColor: "rgba(255,99,132,1)",
-            backgroundColor: "rgba(255,99,132,0.2)",
-            yAxisID: "yBar",
+            backgroundColor: "rgba(128, 128, 128, 0.5)", // Gray for volume
+            borderColor: "rgba(128, 128, 128, 1)",
+            borderWidth: 1,
+            yAxisID: "yVolume",
           },
         ],
       }
     : null;
 
+  // Calculate dynamic min and max for yPrice axis
+  const priceMin = seriesChartData ? Math.min(...seriesChartData.lineData) : 0;
+  const priceMax = seriesChartData ? Math.max(...seriesChartData.lineData) : 100;
+  const priceRange = priceMax - priceMin;
+  const buffer = priceRange * 0.1; // 10% buffer
+  const yPriceMin = priceMin - buffer;
+  const yPriceMax = priceMax + buffer;
+
   const chartOptions: ChartOptions<"bar" | "line"> = {
     responsive: true,
+    maintainAspectRatio: false, // Allow custom height
     plugins: {
-      legend: { position: "top" },
-      title: { display: true, text: `${selectedStock} Series Chart` },
+      legend: {
+        position: "top",
+        labels: { color: "#c9d1d9" }, // Match text color to theme
+      },
+      title: {
+        display: true,
+        text: `${selectedStock} - 7 Day Hourly Price & Volume`,
+        color: "#c9d1d9",
+      },
+      tooltip: {
+        mode: "index",
+        intersect: false,
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        titleColor: "#fff",
+        bodyColor: "#fff",
+      },
     },
     scales: {
-      x: { type: "category" as const },
-      yLine: {
+      x: {
+        type: "category" as const,
+        grid: { display: false }, // Remove vertical gridlines
+        ticks: {
+          maxTicksLimit: 20, // Limit number of labels for readability
+          color: "#c9d1d9",
+        },
+      },
+      yPrice: {
         type: "linear" as const,
         position: "left" as const,
-        title: { display: true, text: "Line Series" },
+        title: {
+          display: true,
+          text: "Price ($)",
+          color: "#c9d1d9",
+        },
+        grid: {
+          color: "#30363d", // Subtle gridlines matching theme
+        },
+        ticks: {
+          color: "#c9d1d9",
+          callback: (value) => `$${Number(value).toFixed(2)}`, // Convert to number before toFixed
+        },
+        min: yPriceMin, // Dynamic min
+        max: yPriceMax, // Dynamic max
       },
-      yBar: {
+      yVolume: {
         type: "linear" as const,
         position: "right" as const,
-        title: { display: true, text: "Bar Series" },
-        grid: { drawOnChartArea: false },
+        title: {
+          display: true,
+          text: "Volume",
+          color: "#c9d1d9",
+        },
+        grid: { display: false }, // No gridlines for volume
+        ticks: {
+          color: "#c9d1d9",
+          callback: (value) => `${(Number(value) / 1000).toFixed(0)}K`, // Convert to number before division
+        },
+        max: Math.max(...(seriesChartData?.barData || [])) * 1.2, // Extra space above max volume
       },
     },
   };
@@ -194,7 +253,6 @@ export default function Home() {
   // Sort Handler
   // --------------------------
 
-  // Define a type for sortable columns
   type SortableColumn = 'id' | 'cashtag' | 'prev_open' | 'prev_eod' | 'latest_price' | 'chng';
 
   const handleSort = (column: SortableColumn): void => {
@@ -240,7 +298,15 @@ export default function Home() {
         <div className="table-container">
           <table className="border-collapse border border-gray-700 w-full">
             <thead>
-              <tr className="bg-gray-800 text-center"><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("id")}>ID</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("cashtag")}>Stock</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("latest_price")}>Latest Price</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("prev_open")}>Prev Open</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("prev_eod")}>Prev EOD</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("chng")}>Change</th><th className="border border-gray-700 p-0 text-center w-32">Trend</th></tr>
+              <tr className="bg-gray-800 text-center">
+                <th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("id")}>ID</th>
+                <th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("cashtag")}>Stock</th>
+                <th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("latest_price")}>Latest Price</th>
+                <th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("prev_open")}>Prev Open</th>
+                <th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("prev_eod")}>Prev EOD</th>
+                <th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("chng")}>Change</th>
+                <th className="border border-gray-700 p-0 text-center w-32">Trend</th>
+              </tr>
             </thead>
             <tbody>
               {stockData.map((item) => (
@@ -317,8 +383,8 @@ export default function Home() {
           )}
 
           {seriesChartData && seriesChartConfig && (
-            <div className="mt-6">
-              <h2 className="text-xl font-semibold">Series Chart</h2>
+            <div className="mt-6 chart-container" style={{ height: "400px" }}>
+              <h2 className="text-xl font-semibold">7-Day Series Chart</h2>
               <Chart type="bar" data={seriesChartConfig} options={chartOptions} />
             </div>
           )}

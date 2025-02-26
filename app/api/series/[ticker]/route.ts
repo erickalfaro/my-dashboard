@@ -1,8 +1,6 @@
-// app/api/series/[ticker]/route.ts
 import { NextResponse } from "next/server";
 import axios from "axios";
 
-// Define the structure of an Alpaca bar
 interface AlpacaBar {
   t: string; // Timestamp
   o: number; // Open price
@@ -47,9 +45,9 @@ export async function GET(req: Request, ctx: ContextParams) {
       },
       params: {
         timeframe: "1Hour",
-        limit: 24,
+        limit: 168, // 7 days * 24 hours = 168 hours
         adjustment: "raw",
-        start: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
         end: new Date().toISOString(),
       },
     });
@@ -57,8 +55,8 @@ export async function GET(req: Request, ctx: ContextParams) {
     const bars = response.data.bars || [];
     console.log(`Alpaca response for ${ticker}:`, response.data);
 
-    const lineData = bars.map((bar: AlpacaBar) => bar.c); // Typed as AlpacaBar
-    const barData = bars.map((bar: AlpacaBar) => bar.v);  // Typed as AlpacaBar
+    const lineData = bars.map((bar: AlpacaBar) => bar.c); // Close price for hourly line plot
+    const barData = bars.map((bar: AlpacaBar) => bar.v);  // Volume for bar plot
 
     console.log(`Processed data for ${ticker}:`, { ticker, lineData, barData });
 
