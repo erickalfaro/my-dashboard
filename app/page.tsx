@@ -250,9 +250,15 @@ export default function Home() {
                   >
                     {item.name}
                   </td>
-                  <td className="border border-gray-700 p-1 text-center w-5">${item.value.toFixed(2)}</td>
-                  <td className="border border-gray-700 p-1 text-center w-5">{item.open !== undefined ? item.open : "-"}</td>
-                  <td className="border border-gray-700 p-1 text-center w-5">{item.high !== undefined ? item.high : "-"}</td>
+                  <td className="border border-gray-700 p-1 text-center w-5">
+                    {item.value !== null && item.value !== undefined ? `$${item.value.toFixed(2)}` : '-'}
+                  </td>
+                  <td className="border border-gray-700 p-1 text-center w-5">
+                    {item.open !== undefined ? item.open : '-'}
+                  </td>
+                  <td className="border border-gray-700 p-1 text-center w-5">
+                    {item.high !== undefined ? item.high : '-'}
+                  </td>
                   <td className="border border-gray-700 p-0 text-center w-20">
                     <div className="w-full h-full">
                       <Sparklines data={item.trend}>
