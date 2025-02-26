@@ -138,13 +138,18 @@ export default function Home() {
   // Chart Data & Options
   // --------------------------
 
+  // In app/page.tsx, within the Home component
   const seriesChartConfig = seriesChartData
     ? {
-        labels: Array.from({ length: seriesChartData.lineData.length }, (_, i) => `Label ${i + 1}`),
+        labels: Array.from({ length: seriesChartData.lineData.length }, (_, i) => {
+          const date = new Date();
+          date.setHours(date.getHours() - (seriesChartData.lineData.length - 1 - i));
+          return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }),
         datasets: [
           {
             type: "line" as const,
-            label: `${seriesChartData.ticker} Line Series`,
+            label: `${seriesChartData.ticker} Hourly Price`,
             data: seriesChartData.lineData,
             borderColor: "rgba(75,192,192,1)",
             backgroundColor: "rgba(75,192,192,0.2)",
@@ -153,7 +158,7 @@ export default function Home() {
           },
           {
             type: "bar" as const,
-            label: `${seriesChartData.ticker} Bar Series`,
+            label: `${seriesChartData.ticker} Hourly Volume`,
             data: seriesChartData.barData,
             borderColor: "rgba(255,99,132,1)",
             backgroundColor: "rgba(255,99,132,0.2)",
