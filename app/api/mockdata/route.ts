@@ -1,6 +1,21 @@
 // app/api/mockdata/route.ts
 import { supabase } from '../../../lib/supabase'; // Adjust path as needed
 
+// Define the expected structure of each stock record
+interface StockData {
+  id: number;
+  name: string;
+  value: number;
+  open: number;
+  high: number;
+  trend: number[];
+}
+
+// Define the shape of a row from Supabase
+interface SupabaseRow {
+  data: StockData[] | string; // Can be an array of StockData or a JSON string
+}
+
 export async function GET() {
   try {
     // Query the frontend_timeseries_data table
@@ -24,14 +39,13 @@ export async function GET() {
     }
 
     // Flatten all records from the 'data' column
-    const allRecords = data.flatMap((row: { data: any }) => {
-      // If row.data is a string, parse it; otherwise, use it as-is
+    const allRecords = data.flatMap((row: SupabaseRow) => {
       const parsedData = typeof row.data === 'string' ? JSON.parse(row.data) : row.data;
-      return parsedData; // Return the array of records
+      return parsedData as StockData[]; // Type assertion after parsing
     });
 
-    // Ensure the data matches the expected structure
-    const transformedData = allRecords.map((item: any) => ({
+    // Transform the data to ensure the structure
+    const transformedData = allRecords.map((item: StockData) => ({
       id: item.id,
       name: item.name,
       value: item.value,
