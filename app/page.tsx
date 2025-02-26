@@ -1,3 +1,4 @@
+// app/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,8 +23,8 @@ import { ChartOptions } from "chart.js";
 
 // Register Chart.js modules for mixed chart types
 ChartJS.register(
-  LineController,   // <-- needed for a "line" type chart
-  BarController,    // <-- needed for a "bar" type chart
+  LineController,
+  BarController,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -40,11 +41,12 @@ ChartJS.register(
 
 interface DataItem {
   id: number;
-  name: string;
-  value: number;
+  cashtag: string;
+  prev_open: number | null;
+  prev_eod: number | null;
+  latest_price: number | null;
+  chng: number | null;
   trend: number[];
-  open: number;
-  high: number;
 }
 
 interface AdditionalData {
@@ -59,23 +61,20 @@ interface TickerChartData {
   barData: number[];
 }
 
-// const STOCK_API_URL = "https://cashdash.free.beeceptor.com/todos";
 const STOCK_API_URL = "/api/mockdata";
 const ADDITIONAL_DATA_API_URL = "/api/additionalData";
-const TICKER_API_URL = "/api/ticker"; // Detailed info endpoint
-const SERIES_API_URL = "/api/series"; // Series (plot) endpoint
+const TICKER_API_URL = "/api/ticker";
+const SERIES_API_URL = "/api/series";
 
 // --------------------------
 // Main Component
 // --------------------------
 
 export default function Home() {
-  // Data for stock table and additional info
   const [stockData, setStockData] = useState<DataItem[]>([]);
   const [additionalData, setAdditionalData] = useState<Record<string, AdditionalData> | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // State for detailed ticker info and series chart data
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [tickerResponse, setTickerResponse] = useState<string>("");
   const [seriesChartData, setSeriesChartData] = useState<TickerChartData | null>(null);
@@ -112,15 +111,14 @@ export default function Home() {
   }, []);
 
   // --------------------------
-  // Event Handler for Ticker Click (runs API calls in parallel)
+  // Event Handler for Ticker Click
   // --------------------------
 
   const handleTickerClick = async (ticker: string): Promise<void> => {
     setTickerLoading(true);
-    setTickerResponse(""); // Clear previous detailed info
+    setTickerResponse("");
     setSelectedStock(ticker);
     try {
-      // Initiate both API calls concurrently
       const detailedPromise = axios.get<{ message: string }>(`${TICKER_API_URL}/${ticker}`);
       const seriesPromise = axios.get<TickerChartData>(`${SERIES_API_URL}/${ticker}`);
       const [detailedResponse, seriesResponse] = await Promise.all([detailedPromise, seriesPromise]);
@@ -137,7 +135,7 @@ export default function Home() {
   };
 
   // --------------------------
-  // Chart Data & Options for the Series Plot
+  // Chart Data & Options
   // --------------------------
 
   const seriesChartConfig = seriesChartData
@@ -188,15 +186,27 @@ export default function Home() {
   };
 
   // --------------------------
-  // (Optional) Sort Handler for Stock Table
+  // Sort Handler
   // --------------------------
 
-  const handleSort = (column: keyof DataItem): void => {
+  // Define a type for sortable columns
+  type SortableColumn = 'id' | 'cashtag' | 'prev_open' | 'prev_eod' | 'latest_price' | 'chng';
+
+  const handleSort = (column: SortableColumn): void => {
     const newDirection: "asc" | "desc" = "asc";
     setStockData((prevData) => {
       const sortedData = [...prevData].sort((a, b) => {
-        if (a[column] > b[column]) return newDirection === "asc" ? 1 : -1;
-        if (a[column] < b[column]) return newDirection === "asc" ? -1 : 1;
+        const aValue = a[column];
+        const bValue = b[column];
+
+        // Handle null values: nulls go to the end
+        if (aValue === null && bValue === null) return 0;
+        if (aValue === null) return 1;
+        if (bValue === null) return -1;
+
+        // Compare values (safe now that nulls are handled)
+        if (aValue > bValue) return newDirection === "asc" ? 1 : -1;
+        if (aValue < bValue) return newDirection === "asc" ? -1 : 1;
         return 0;
       });
       return sortedData;
@@ -225,41 +235,31 @@ export default function Home() {
         <div className="table-container">
           <table className="border-collapse border border-gray-700 w-full">
             <thead>
-              <tr className="bg-gray-800 text-center">
-                <th className="border border-gray-700 p-1 text-center w-5" onClick={() => handleSort("id")}>
-                  ID
-                </th>
-                <th className="border border-gray-700 p-1 text-center w-5" onClick={() => handleSort("name")}>
-                  Stock
-                </th>
-                <th className="border border-gray-700 p-1 text-center w-5" onClick={() => handleSort("value")}>
-                  Price
-                </th>
-                <th className="border border-gray-700 p-1 text-center w-5">Open</th>
-                <th className="border border-gray-700 p-1 text-center w-5">High</th>
-                <th className="border border-gray-700 p-0 text-center w-20">Trend</th>
-              </tr>
+              <tr className="bg-gray-800 text-center"><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("id")}>ID</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("cashtag")}>Stock</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("latest_price")}>Latest Price</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("prev_open")}>Prev Open</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("prev_eod")}>Prev EOD</th><th className="border border-gray-700 p-1 text-center w-3" onClick={() => handleSort("chng")}>Change</th><th className="border border-gray-700 p-0 text-center w-32">Trend</th></tr>
             </thead>
             <tbody>
               {stockData.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-800 text-center">
-                  <td className="border border-gray-700 p-1 text-center w-5">{item.id}</td>
+                  <td className="border border-gray-700 p-1 text-center w-3">{item.id}</td>
                   <td
-                    className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline text-center w-5"
-                    onClick={() => handleTickerClick(item.name)}
+                    className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline text-center w-3"
+                    onClick={() => handleTickerClick(item.cashtag)}
                   >
-                    {item.name}
+                    {item.cashtag}
                   </td>
-                  <td className="border border-gray-700 p-1 text-center w-5">
-                    {item.value !== null && item.value !== undefined ? `$${item.value.toFixed(2)}` : '-'}
+                  <td className="border border-gray-700 p-1 text-center w-3">
+                    {item.latest_price !== null && item.latest_price !== undefined ? `$${item.latest_price.toFixed(2)}` : '-'}
                   </td>
-                  <td className="border border-gray-700 p-1 text-center w-5">
-                    {item.open !== undefined ? item.open : '-'}
+                  <td className="border border-gray-700 p-1 text-center w-3">
+                    {item.prev_open !== null && item.prev_open !== undefined ? item.prev_open : '-'}
                   </td>
-                  <td className="border border-gray-700 p-1 text-center w-5">
-                    {item.high !== undefined ? item.high : '-'}
+                  <td className="border border-gray-700 p-1 text-center w-3">
+                    {item.prev_eod !== null && item.prev_eod !== undefined ? item.prev_eod : '-'}
                   </td>
-                  <td className="border border-gray-700 p-0 text-center w-20">
+                  <td className="border border-gray-700 p-1 text-center w-3">
+                    {item.chng !== null && item.chng !== undefined ? item.chng : '-'}
+                  </td>
+                  <td className="border border-gray-700 p-0 text-center w-32">
                     <div className="w-full h-full">
                       <Sparklines data={item.trend}>
                         <SparklinesLine color="white" />
@@ -275,7 +275,6 @@ export default function Home() {
 
       {selectedStock && (
         <div className="mt-6">
-          {/* Detailed Info Section */}
           {tickerLoading ? (
             <p>Loading ticker data...</p>
           ) : (
@@ -284,7 +283,6 @@ export default function Home() {
             </p>
           )}
 
-          {/* Additional Data Table */}
           <h2 className="text-xl font-semibold mt-4">Additional Data for {selectedStock}</h2>
           {additionalData && additionalData[selectedStock] ? (
             <table className="border-collapse border border-gray-700 w-full text-center mt-2">
@@ -313,11 +311,9 @@ export default function Home() {
             <p>No additional data available for {selectedStock}</p>
           )}
 
-          {/* Series Chart Section */}
           {seriesChartData && seriesChartConfig && (
             <div className="mt-6">
               <h2 className="text-xl font-semibold">Series Chart</h2>
-              {/* Provide a default "type" prop; datasets override this as needed */}
               <Chart type="bar" data={seriesChartConfig} options={chartOptions} />
             </div>
           )}

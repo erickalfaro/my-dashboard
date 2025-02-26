@@ -4,10 +4,11 @@ import { supabase } from '../../../lib/supabase'; // Adjust path as needed
 // Define the expected structure of each stock record
 interface StockData {
   id: number;
-  name: string;
-  value: number;
-  open: number;
-  high: number;
+  cashtag: string;
+  prev_open: number;
+  prev_eod: number;
+  latest_price: number;
+  chng: number;
   trend: number[];
 }
 
@@ -47,10 +48,11 @@ export async function GET() {
     // Transform the data to ensure the structure
     const transformedData = allRecords.map((item: StockData) => ({
       id: item.id,
-      name: item.name,
-      value: item.value,
-      open: item.open,
-      high: item.high,
+      cashtag: item.cashtag,
+      prev_open: item.prev_open,
+      prev_eod: item.prev_eod,
+      latest_price: item.latest_price,
+      chng: item.chng,
       trend: item.trend,
     }));
 
