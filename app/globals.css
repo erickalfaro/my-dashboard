@@ -108,19 +108,19 @@ header {
 }
 
 .StockLedger {
-  min-height: 100px; /* Reduced from 300px to be less tall */
+  min-height: 80px; /* Reduced from 100px for a shorter default height */
   overflow-y: auto;
 }
 
 @media (max-width: 767px) {
   .StockLedger {
-    max-height: 150px; /* Smaller height on mobile */
+    max-height: 120px; /* Reduced from 150px to make it shorter on mobile */
   }
 }
 
 @media (min-width: 768px) {
   .StockLedger {
-    max-height: 300px; /* Keep original height on desktop */
+    max-height: 300px; /* Unchanged for desktop */
   }
 }
 
@@ -128,21 +128,21 @@ header {
   width: 100%;
   border-collapse: collapse;
   background-color: #161b22;
-  font-size: 12px;
+  font-size: 12px; /* Default font size */
 }
 
 .StockLedger th,
 .StockLedger td {
   border: 1px solid #30363d;
-  padding: 8px;
+  padding: 6px; /* Reduced default padding from 8px */
   text-align: center;
 }
 
 @media (max-width: 767px) {
   .StockLedger th,
   .StockLedger td {
-    padding: 4px; /* Reduced padding on mobile for better fit */
-    font-size: 10px; /* Smaller font on mobile */
+    padding: 1px; /* Further reduced padding on mobile */
+    font-size: 6px; /* Reduced font size from 10px for a more compact look */
   }
 }
 
