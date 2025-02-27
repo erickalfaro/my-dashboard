@@ -33,7 +33,7 @@ ChartJS.register(
   Legend
 );
 
-interface DataItem {
+interface TickerTapeItem {
   id: number;
   cashtag: string;
   prev_open: number | null;
@@ -43,13 +43,13 @@ interface DataItem {
   trend: number[];
 }
 
-interface TickerData {
+interface StockLedgerData {
   stockName: string;
   description: string;
   marketCap: string;
 }
 
-interface TickerChartData {
+interface MarketCanvasData {
   ticker: string;
   lineData: number[];
   barData: number[];
@@ -60,67 +60,67 @@ const TICKER_API_URL = "/api/ticker";
 const SERIES_API_URL = "/api/series";
 
 export default function Home() {
-  const [stockData, setStockData] = useState<DataItem[]>([]);
-  const [tickerData, setTickerData] = useState<TickerData>({
+  const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
+  const [stockLedgerData, setStockLedgerData] = useState<StockLedgerData>({
     stockName: "N/A",
     description: "Select a ticker to view details",
     marketCap: "N/A",
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
-  const [seriesChartData, setSeriesChartData] = useState<TickerChartData | null>(null);
-  const [tickerLoading, setTickerLoading] = useState<boolean>(false);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof DataItem | null; direction: "asc" | "desc" }>({
+  const [marketCanvasData, setMarketCanvasData] = useState<MarketCanvasData | null>(null);
+  const [stockLedgerLoading, setStockLedgerLoading] = useState<boolean>(false);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof TickerTapeItem | null; direction: "asc" | "desc" }>({
     key: null,
     direction: "asc",
   });
 
-  const fetchStockData = async (): Promise<void> => {
+  const fetchTickerTapeData = async (): Promise<void> => {
     setLoading(true);
     try {
-      const response = await axios.get<DataItem[]>(STOCK_API_URL);
-      setStockData(response.data);
+      const response = await axios.get<TickerTapeItem[]>(STOCK_API_URL);
+      setTickerTapeData(response.data);
     } catch (error) {
-      console.error("Error fetching stock data:", error);
+      console.error("Error fetching TickerTape data:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStockData();
+    fetchTickerTapeData();
   }, []);
 
   const handleTickerClick = async (ticker: string): Promise<void> => {
-    setTickerLoading(true);
+    setStockLedgerLoading(true);
     setSelectedStock(ticker);
     try {
-      const detailedPromise = axios.get<TickerData>(`${TICKER_API_URL}/${ticker}`);
-      const seriesPromise = axios.get<TickerChartData>(`${SERIES_API_URL}/${ticker}`);
-      const [detailedResponse, seriesResponse] = await Promise.all([detailedPromise, seriesPromise]);
+      const ledgerPromise = axios.get<StockLedgerData>(`${TICKER_API_URL}/${ticker}`);
+      const canvasPromise = axios.get<MarketCanvasData>(`${SERIES_API_URL}/${ticker}`);
+      const [ledgerResponse, canvasResponse] = await Promise.all([ledgerPromise, canvasPromise]);
 
-      setTickerData(detailedResponse.data);
-      setSeriesChartData(seriesResponse.data);
+      setStockLedgerData(ledgerResponse.data);
+      setMarketCanvasData(canvasResponse.data);
     } catch (error) {
-      console.error("Error fetching ticker data:", error);
-      setTickerData({ stockName: "Error", description: "Failed to fetch ticker info", marketCap: "N/A" });
-      setSeriesChartData(null);
+      console.error("Error fetching StockLedger or MarketCanvas data:", error);
+      setStockLedgerData({ stockName: "Error", description: "Failed to fetch ticker info", marketCap: "N/A" });
+      setMarketCanvasData(null);
     } finally {
-      setTickerLoading(false);
+      setStockLedgerLoading(false);
     }
   };
 
-  const seriesChartConfig = seriesChartData
+  const marketCanvasConfig = marketCanvasData
     ? {
-        labels: Array.from({ length: seriesChartData.lineData.length }, (_, i) => {
+        labels: Array.from({ length: marketCanvasData.lineData.length }, (_, i) => {
           const date = new Date();
-          date.setHours(date.getHours() - (seriesChartData.lineData.length - 1 - i));
+          date.setHours(date.getHours() - (marketCanvasData.lineData.length - 1 - i));
           return date;
         }),
         datasets: [
           {
             type: "line" as const,
-            data: seriesChartData.lineData,
+            data: marketCanvasData.lineData,
             borderColor: "#00C805",
             backgroundColor: "rgba(0, 200, 5, 0.1)",
             fill: false,
@@ -131,7 +131,7 @@ export default function Home() {
           },
           {
             type: "bar" as const,
-            data: seriesChartData.barData,
+            data: marketCanvasData.barData,
             backgroundColor: "rgba(128, 128, 128, 0.5)",
             borderColor: "rgba(128, 128, 128, 1)",
             borderWidth: 1,
@@ -141,14 +141,14 @@ export default function Home() {
       }
     : null;
 
-  const priceMin = seriesChartData ? Math.min(...seriesChartData.lineData) : 0;
-  const priceMax = seriesChartData ? Math.max(...seriesChartData.lineData) : 100;
+  const priceMin = marketCanvasData ? Math.min(...marketCanvasData.lineData) : 0;
+  const priceMax = marketCanvasData ? Math.max(...marketCanvasData.lineData) : 100;
   const priceRange = priceMax - priceMin;
   const buffer = priceRange * 0.1;
   const yPriceMin = priceMin - buffer;
   const yPriceMax = priceMax + buffer;
 
-  const chartOptions: ChartOptions<"bar" | "line"> = {
+  const marketCanvasOptions: ChartOptions<"bar" | "line"> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -183,7 +183,7 @@ export default function Home() {
         grid: { display: false },
         ticks: {
           callback: function (_value, index: number) {
-            const date = seriesChartConfig?.labels[index] as Date;
+            const date = marketCanvasConfig?.labels[index] as Date;
             if (date && date.getHours() === 12) {
               return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
                 .toString()
@@ -226,16 +226,16 @@ export default function Home() {
           color: "#c9d1d9",
           callback: (value) => `${(Number(value) / 1000).toFixed(0)}K`,
         },
-        max: Math.max(...(seriesChartData?.barData || [])) * 1.2 || 1000,
+        max: Math.max(...(marketCanvasData?.barData || [])) * 1.2 || 1000,
       },
     },
   };
 
-  const handleSort = (key: keyof DataItem): void => {
+  const handleSort = (key: keyof TickerTapeItem): void => {
     const direction = sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
     setSortConfig({ key, direction });
 
-    setStockData((prevData) => {
+    setTickerTapeData((prevData) => {
       const sortedData = [...prevData].sort((a, b) => {
         const aValue = a[key];
         const bValue = b[key];
@@ -261,16 +261,16 @@ export default function Home() {
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
       <button
-        onClick={fetchStockData}
+        onClick={fetchTickerTapeData}
         className="p-2 bg-blue-500 text-white rounded mb-4"
       >
         Refresh Data
       </button>
 
       {loading ? (
-        <p>Loading stock data...</p>
+        <p>Loading TickerTape data...</p>
       ) : (
-        <div className="table-container">
+        <div className="TickerTape">
           <table className="border-collapse border border-gray-700 w-full">
             <thead>
               <tr className="bg-gray-800 text-center">
@@ -314,7 +314,7 @@ export default function Home() {
               </tr>
             </thead>
             <tbody>
-              {stockData.map((item) => (
+              {tickerTapeData.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-800 text-center">
                   <td className="border border-gray-700 p-1 text-center w-12">{item.id}</td>
                   <td
@@ -351,11 +351,11 @@ export default function Home() {
         </div>
       )}
 
-      {/* Predefined Polygon.io Data Table */}
+      {/* StockLedger Section */}
       <div className="mt-6">
-        <h2 className="text-lg font-semibold mb-2">Stock Details{tickerLoading ? " (Loading...)" : ""}</h2>
-        <div className="polygon-table-container">
-          <table className="polygon-table">
+        <h2 className="text-lg font-semibold mb-2">StockLedger{stockLedgerLoading ? " (Loading...)" : ""}</h2>
+        <div className="StockLedger">
+          <table>
             <thead>
               <tr className="bg-gray-800">
                 <th className="border border-gray-700 p-2 text-center" style={{ width: "25%" }}>Stock Name</th>
@@ -366,13 +366,13 @@ export default function Home() {
             <tbody>
               <tr className="hover:bg-gray-800">
                 <td className="border border-gray-700 p-2 text-center" style={{ width: "25%" }}>
-                  {tickerData.stockName}
+                  {stockLedgerData.stockName}
                 </td>
                 <td className="border border-gray-700 p-2 text-center" style={{ width: "50%" }}>
-                  {tickerData.description}
+                  {stockLedgerData.description}
                 </td>
                 <td className="border border-gray-700 p-2 text-center" style={{ width: "25%" }}>
-                  {tickerData.marketCap}
+                  {stockLedgerData.marketCap}
                 </td>
               </tr>
             </tbody>
@@ -380,10 +380,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Chart Section */}
-      {seriesChartData && seriesChartConfig && (
-        <div className="mt-6 chart-container" style={{ height: "400px" }}>
-          <Chart type="bar" data={seriesChartConfig} options={chartOptions} />
+      {/* MarketCanvas Section */}
+      {marketCanvasData && marketCanvasConfig && (
+        <div className="mt-6 MarketCanvas" style={{ height: "400px" }}>
+          <Chart type="bar" data={marketCanvasConfig} options={marketCanvasOptions} />
         </div>
       )}
     </div>

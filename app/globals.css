@@ -19,13 +19,13 @@ body {
   color: #c9d1d9;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   margin: 0;
-  padding: 5px; /* Further reduced from 10px */
+  padding: 5px;
   font-size: 14px;
 }
 
 @media (min-width: 768px) {
   body {
-    padding: 10px; /* Reduced from 20px for desktop */
+    padding: 10px;
   }
 }
 
@@ -38,13 +38,13 @@ a:hover {
   text-decoration: underline;
 }
 
-.table-container {
-  max-height: 400px;
+.TickerTape {
+  height: 400px; /* Fixed height instead of max-height */
   overflow-y: auto;
-  position: relative; /* Added for sticky headers */
+  position: relative; /* For sticky headers */
 }
 
-table {
+.TickerTape table {
   width: 100%;
   border-collapse: collapse;
   background-color: #161b22;
@@ -52,24 +52,25 @@ table {
   font-size: 12px;
 }
 
-th, td {
+.TickerTape th,
+.TickerTape td {
   border: 1px solid #30363d;
   padding: 2px 6px;
   text-align: left;
 }
 
-th {
-  position: sticky; /* Make headers sticky */
-  top: 0; /* Stick to top of container */
-  background-color: #161b22; /* Match table background */
-  z-index: 10; /* Ensure headers stay above content */
+.TickerTape th {
+  position: sticky;
+  top: 0;
+  background-color: #161b22;
+  z-index: 10;
 }
 
 .additional-table {
   margin-top: 20px;
 }
 
-.chart-container {
+.MarketCanvas {
   background-color: #161b22;
   padding: 10px;
   border: 1px solid #30363d;
@@ -80,28 +81,27 @@ header {
   margin-bottom: 20px;
 }
 
-/* app/globals.css */
-.polygon-table-container {
+.StockLedger {
   min-height: 300px;
   max-height: 300px;
   overflow-y: auto;
 }
 
-.polygon-table {
+.StockLedger table {
   width: 100%;
   border-collapse: collapse;
   background-color: #161b22;
   font-size: 12px;
 }
 
-.polygon-table th,
-.polygon-table td {
+.StockLedger th,
+.StockLedger td {
   border: 1px solid #30363d;
   padding: 8px;
   text-align: center;
 }
 
-.polygon-table th {
+.StockLedger th {
   position: sticky;
   top: 0;
   background-color: #161b22;
