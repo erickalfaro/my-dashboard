@@ -55,7 +55,7 @@ a:hover {
 .TickerTape th,
 .TickerTape td {
   border: 1px solid #30363d;
-  padding: 2px 6px;
+  padding: 4px 6px; /* Increased padding for taller rows */
   text-align: left;
 }
 
@@ -64,6 +64,32 @@ a:hover {
   top: 0;
   background-color: #161b22;
   z-index: 10;
+}
+
+/* Mobile adjustments for TickerTape */
+@media (max-width: 767px) {
+  .TickerTape th,
+  .TickerTape td {
+    padding: 6px 4px; /* Taller rows on mobile */
+  }
+
+  .TickerTape table {
+    font-size: 10px; /* Slightly smaller font on mobile for better fit */
+  }
+
+  /* Widen the Trends column specifically */
+  .TickerTape td:nth-child(3),
+  .TickerTape th:nth-child(3) {
+    min-width: 100px; /* Wider Trends column on mobile */
+  }
+}
+
+/* Desktop adjustments */
+@media (min-width: 768px) {
+  .TickerTape td:nth-child(3),
+  .TickerTape th:nth-child(3) {
+    min-width: 140px; /* Even wider on desktop */
+  }
 }
 
 .additional-table {
@@ -82,9 +108,20 @@ header {
 }
 
 .StockLedger {
-  min-height: 300px;
-  max-height: 300px;
+  min-height: 100px; /* Reduced from 300px to be less tall */
   overflow-y: auto;
+}
+
+@media (max-width: 767px) {
+  .StockLedger {
+    max-height: 150px; /* Smaller height on mobile */
+  }
+}
+
+@media (min-width: 768px) {
+  .StockLedger {
+    max-height: 300px; /* Keep original height on desktop */
+  }
 }
 
 .StockLedger table {
@@ -99,6 +136,14 @@ header {
   border: 1px solid #30363d;
   padding: 8px;
   text-align: center;
+}
+
+@media (max-width: 767px) {
+  .StockLedger th,
+  .StockLedger td {
+    padding: 4px; /* Reduced padding on mobile for better fit */
+    font-size: 10px; /* Smaller font on mobile */
+  }
 }
 
 .StockLedger th {
