@@ -169,3 +169,42 @@ header {
   background-color: #161b22;
   z-index: 10;
 }
+
+.PostViewer {
+  height: 400px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.PostViewer table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #161b22;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+
+.PostViewer th,
+.PostViewer td {
+  border: 1px solid #30363d;
+  padding: 4px 6px;
+  text-align: left;
+}
+
+.PostViewer th {
+  position: sticky;
+  top: 0;
+  background-color: #161b22;
+  z-index: 10;
+}
+
+@media (max-width: 767px) {
+  .PostViewer th,
+  .PostViewer td {
+    padding: 6px 4px;
+  }
+
+  .PostViewer table {
+    font-size: 10px;
+  }
+}

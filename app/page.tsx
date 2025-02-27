@@ -18,7 +18,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { ChartOptions } from "chart.js";
+import { ChartOptions, ChartData } from "chart.js";
 
 ChartJS.register(
   LineController,
@@ -55,9 +55,15 @@ interface MarketCanvasData {
   barData: number[];
 }
 
+interface PostData {
+  hours: number;
+  text: string;
+}
+
 const STOCK_API_URL = "/api/mockdata";
 const TICKER_API_URL = "/api/ticker";
 const SERIES_API_URL = "/api/series";
+const POSTS_API_URL = "/api/posts";
 
 export default function Home() {
   const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
@@ -70,6 +76,8 @@ export default function Home() {
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [marketCanvasData, setMarketCanvasData] = useState<MarketCanvasData | null>(null);
   const [stockLedgerLoading, setStockLedgerLoading] = useState<boolean>(false);
+  const [postsData, setPostsData] = useState<PostData[]>([]);
+  const [postsLoading, setPostsLoading] = useState<boolean>(false);
   const [sortConfig, setSortConfig] = useState<{ key: keyof TickerTapeItem | null; direction: "asc" | "desc" }>({
     key: null,
     direction: "asc",
@@ -93,143 +101,138 @@ export default function Home() {
 
   const handleTickerClick = async (ticker: string): Promise<void> => {
     setStockLedgerLoading(true);
-    setSelectedStock(ticker);
+    setPostsLoading(true);
+    const cleanTicker = ticker.replace("$", ""); // Remove $ prefix for API consistency
+    setSelectedStock(cleanTicker);
     try {
-      const ledgerPromise = axios.get<StockLedgerData>(`${TICKER_API_URL}/${ticker}`);
-      const canvasPromise = axios.get<MarketCanvasData>(`${SERIES_API_URL}/${ticker}`);
-      const [ledgerResponse, canvasResponse] = await Promise.all([ledgerPromise, canvasPromise]);
+      const ledgerPromise = axios.get<StockLedgerData>(`${TICKER_API_URL}/${cleanTicker}`);
+      const canvasPromise = axios.get<MarketCanvasData>(`${SERIES_API_URL}/${cleanTicker}`);
+      const postsPromise = axios.get<PostData[]>(`${POSTS_API_URL}/${cleanTicker}`);
+      const [ledgerResponse, canvasResponse, postsResponse] = await Promise.all([
+        ledgerPromise,
+        canvasPromise,
+        postsPromise,
+      ]);
 
       setStockLedgerData(ledgerResponse.data);
       setMarketCanvasData(canvasResponse.data);
+      setPostsData(postsResponse.data);
     } catch (error) {
-      console.error("Error fetching StockLedger or MarketCanvas data:", error);
+      console.error("Error fetching data:", error);
       setStockLedgerData({ stockName: "Error", description: "Failed to fetch ticker info", marketCap: "N/A" });
       setMarketCanvasData(null);
+      setPostsData([]);
     } finally {
       setStockLedgerLoading(false);
+      setPostsLoading(false);
     }
   };
 
-  const marketCanvasConfig = marketCanvasData
-    ? {
-        labels: Array.from({ length: marketCanvasData.lineData.length }, (_, i) => {
-          const date = new Date();
-          date.setHours(date.getHours() - (marketCanvasData.lineData.length - 1 - i));
-          return date;
-        }),
-        datasets: [
-          {
-            type: "line" as const,
-            data: marketCanvasData.lineData,
-            borderColor: "#00C805",
-            backgroundColor: "rgba(0, 200, 5, 0.1)",
-            fill: false,
-            yAxisID: "yPrice",
-            tension: 0.1,
-            pointRadius: 0,
-            borderWidth: 1,
-          },
-          {
-            type: "bar" as const,
-            data: marketCanvasData.barData,
-            backgroundColor: "rgba(128, 128, 128, 0.5)",
-            borderColor: "rgba(128, 128, 128, 1)",
-            borderWidth: 1,
-            yAxisID: "yVolume",
-          },
-        ],
-      }
-    : null;
+  const getMarketCanvasConfig = (): { config: ChartData<"bar" | "line">; options: ChartOptions<"bar" | "line"> } | null => {
+    if (!marketCanvasData) return null;
 
-  const priceMin = marketCanvasData ? Math.min(...marketCanvasData.lineData) : 0;
-  const priceMax = marketCanvasData ? Math.max(...marketCanvasData.lineData) : 100;
-  const priceRange = priceMax - priceMin;
-  const buffer = priceRange * 0.1;
-  const yPriceMin = priceMin - buffer;
-  const yPriceMax = priceMax + buffer;
+    const labels = Array.from({ length: marketCanvasData.lineData.length }, (_, i) => {
+      const date = new Date();
+      date.setHours(date.getHours() - (marketCanvasData.lineData.length - 1 - i));
+      return date;
+    });
 
-  const marketCanvasOptions: ChartOptions<"bar" | "line"> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: true,
-        text: `${selectedStock || "No Stock Selected"} - 7 Day Hourly Price & Volume`,
-        color: "#c9d1d9",
-      },
-      tooltip: {
-        mode: "index",
-        intersect: false,
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        titleColor: "#fff",
-        bodyColor: "#fff",
-        callbacks: {
-          title: () => "",
-          label: (context) => {
-            if (context.datasetIndex === 0) {
-              return `$${context.parsed.y.toFixed(2)}`;
-            }
-            return "";
-          },
+    const config: ChartData<"bar" | "line"> = {
+      labels,
+      datasets: [
+        {
+          type: "line" as const,
+          data: marketCanvasData.lineData,
+          borderColor: "#00C805",
+          backgroundColor: "rgba(0, 200, 5, 0.1)",
+          fill: false,
+          yAxisID: "yPrice",
+          tension: 0.1,
+          pointRadius: 0,
+          borderWidth: 1,
         },
-      },
-    },
-    scales: {
-      x: {
-        type: "category" as const,
-        grid: { display: false },
-        ticks: {
-          callback: function (_value, index: number) {
-            const date = marketCanvasConfig?.labels[index] as Date;
-            if (date && date.getHours() === 12) {
-              return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
-                .toString()
-                .padStart(2, "0")}/${date.getFullYear()}`;
-            }
-            return "";
-          },
-          color: "#c9d1d9",
-          maxTicksLimit: 7,
+        {
+          type: "bar" as const,
+          data: marketCanvasData.barData,
+          backgroundColor: "rgba(128, 128, 128, 0.5)",
+          borderColor: "rgba(128, 128, 128, 1)",
+          borderWidth: 1,
+          yAxisID: "yVolume",
         },
-      },
-      yPrice: {
-        type: "linear" as const,
-        position: "left" as const,
+      ],
+    };
+
+    const priceMin = Math.min(...marketCanvasData.lineData);
+    const priceMax = Math.max(...marketCanvasData.lineData);
+    const priceRange = priceMax - priceMin;
+    const buffer = priceRange * 0.1;
+    const yPriceMin = priceMin - buffer;
+    const yPriceMax = priceMax + buffer;
+
+    const options: ChartOptions<"bar" | "line"> = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
         title: {
           display: true,
-          text: "Price ($)",
+          text: `${selectedStock || "No Stock Selected"} - 7 Day Hourly Price & Volume`,
           color: "#c9d1d9",
         },
-        grid: {
-          color: "#30363d",
+        tooltip: {
+          mode: "index",
+          intersect: false,
+          backgroundColor: "rgba(0, 0, 0, 0.8)",
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          callbacks: {
+            title: () => "",
+            label: (context) => (context.datasetIndex === 0 ? `$${context.parsed.y.toFixed(2)}` : ""),
+          },
         },
-        ticks: {
-          color: "#c9d1d9",
-          callback: (value) => `$${Number(value).toFixed(2)}`,
-        },
-        min: yPriceMin,
-        max: yPriceMax,
       },
-      yVolume: {
-        type: "linear" as const,
-        position: "right" as const,
-        title: {
-          display: true,
-          text: "Volume",
-          color: "#c9d1d9",
+      scales: {
+        x: {
+          type: "category" as const,
+          grid: { display: false },
+          ticks: {
+            callback: function (_value, index: number) {
+              const date = labels[index] as Date;
+              if (date && date.getHours() === 12) {
+                return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+                  .toString()
+                  .padStart(2, "0")}/${date.getFullYear()}`;
+              }
+              return "";
+            },
+            color: "#c9d1d9",
+            maxTicksLimit: 7,
+          },
         },
-        grid: { display: false },
-        ticks: {
-          color: "#c9d1d9",
-          callback: (value) => `${(Number(value) / 1000).toFixed(0)}K`,
+        yPrice: {
+          type: "linear" as const,
+          position: "left" as const,
+          title: { display: true, text: "Price ($)", color: "#c9d1d9" },
+          grid: { color: "#30363d" },
+          ticks: { color: "#c9d1d9", callback: (value) => `$${Number(value).toFixed(2)}` },
+          min: yPriceMin,
+          max: yPriceMax,
         },
-        max: Math.max(...(marketCanvasData?.barData || [])) * 1.2 || 1000,
+        yVolume: {
+          type: "linear" as const,
+          position: "right" as const,
+          title: { display: true, text: "Volume", color: "#c9d1d9" },
+          grid: { display: false },
+          ticks: { color: "#c9d1d9", callback: (value) => `${(Number(value) / 1000).toFixed(0)}K` },
+          max: Math.max(...marketCanvasData.barData) * 1.2 || 1000,
+        },
       },
-    },
+    };
+
+    return { config, options };
   };
+
+  const marketCanvas = getMarketCanvasConfig();
 
   const handleSort = (key: keyof TickerTapeItem): void => {
     const direction = sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
@@ -239,11 +242,9 @@ export default function Home() {
       const sortedData = [...prevData].sort((a, b) => {
         const aValue = a[key];
         const bValue = b[key];
-
         if (aValue === null && bValue === null) return 0;
         if (aValue === null) return 1;
         if (bValue === null) return -1;
-
         if (typeof aValue === "string" && typeof bValue === "string") {
           return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         }
@@ -260,10 +261,7 @@ export default function Home() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
-      <button
-        onClick={fetchTickerTapeData}
-        className="p-2 bg-blue-500 text-white rounded mb-4"
-      >
+      <button onClick={fetchTickerTapeData} className="p-2 bg-blue-500 text-white rounded mb-4">
         Refresh Data
       </button>
 
@@ -381,11 +379,40 @@ export default function Home() {
       </div>
 
       {/* MarketCanvas Section */}
-      {marketCanvasData && marketCanvasConfig && (
+      {marketCanvas && (
         <div className="mt-6 MarketCanvas" style={{ height: "300px" }}>
-          <Chart type="bar" data={marketCanvasConfig} options={marketCanvasOptions} />
+          <Chart type="bar" data={marketCanvas.config} options={marketCanvas.options} />
         </div>
       )}
+
+      {/* PostViewer Section */}
+      <div className="mt-6">
+        <h2 className="text-lg font-semibold mb-2">PostViewer{postsLoading ? " (Loading...)" : ""}</h2>
+        {postsLoading ? (
+          <p>Loading posts...</p>
+        ) : postsData.length > 0 ? (
+          <div className="PostViewer">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-800">
+                  <th className="border border-gray-700 p-1 text-center">Hours Ago</th>
+                  <th className="border border-gray-700 p-1 text-center">Post</th>
+                </tr>
+              </thead>
+              <tbody>
+                {postsData.map((post, index) => (
+                  <tr key={index} className="hover:bg-gray-800">
+                    <td className="border border-gray-700 p-1 text-center">{post.hours.toFixed(1)}</td>
+                    <td className="border border-gray-700 p-1 text-left">{post.text}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p>No posts available for {selectedStock || "selected stock"}.</p>
+        )}
+      </div>
     </div>
   );
 }
