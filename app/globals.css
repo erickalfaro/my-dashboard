@@ -79,3 +79,31 @@ header {
   border-bottom: 1px solid #30363d;
   margin-bottom: 20px;
 }
+
+/* app/globals.css */
+.polygon-table-container {
+  min-height: 300px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.polygon-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #161b22;
+  font-size: 12px;
+}
+
+.polygon-table th,
+.polygon-table td {
+  border: 1px solid #30363d;
+  padding: 8px;
+  text-align: center;
+}
+
+.polygon-table th {
+  position: sticky;
+  top: 0;
+  background-color: #161b22;
+  z-index: 10;
+}

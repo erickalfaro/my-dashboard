@@ -18,7 +18,6 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-
 import { ChartOptions } from "chart.js";
 
 ChartJS.register(
@@ -44,10 +43,10 @@ interface DataItem {
   trend: number[];
 }
 
-interface AdditionalData {
+interface TickerData {
+  stockName: string;
+  description: string;
   marketCap: string;
-  companyDescription: string;
-  daysTillEarnings: number;
 }
 
 interface TickerChartData {
@@ -57,21 +56,23 @@ interface TickerChartData {
 }
 
 const STOCK_API_URL = "/api/mockdata";
-const ADDITIONAL_DATA_API_URL = "/api/additionalData";
 const TICKER_API_URL = "/api/ticker";
 const SERIES_API_URL = "/api/series";
 
 export default function Home() {
   const [stockData, setStockData] = useState<DataItem[]>([]);
-  const [additionalData, setAdditionalData] = useState<Record<string, AdditionalData> | null>(null);
+  const [tickerData, setTickerData] = useState<TickerData>({
+    stockName: "N/A",
+    description: "Select a ticker to view details",
+    marketCap: "N/A",
+  });
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
-  const [tickerResponse, setTickerResponse] = useState<string>("");
   const [seriesChartData, setSeriesChartData] = useState<TickerChartData | null>(null);
   const [tickerLoading, setTickerLoading] = useState<boolean>(false);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof DataItem | null; direction: 'asc' | 'desc' }>({
+  const [sortConfig, setSortConfig] = useState<{ key: keyof DataItem | null; direction: "asc" | "desc" }>({
     key: null,
-    direction: 'asc',
+    direction: "asc",
   });
 
   const fetchStockData = async (): Promise<void> => {
@@ -86,34 +87,23 @@ export default function Home() {
     }
   };
 
-  const fetchAdditionalData = async (): Promise<void> => {
-    try {
-      const response = await axios.get<Record<string, AdditionalData>>(ADDITIONAL_DATA_API_URL);
-      setAdditionalData(response.data);
-    } catch (error) {
-      console.error("Error fetching additional data:", error);
-    }
-  };
-
   useEffect(() => {
     fetchStockData();
-    fetchAdditionalData();
   }, []);
 
   const handleTickerClick = async (ticker: string): Promise<void> => {
     setTickerLoading(true);
-    setTickerResponse("");
     setSelectedStock(ticker);
     try {
-      const detailedPromise = axios.get<{ message: string }>(`${TICKER_API_URL}/${ticker}`);
+      const detailedPromise = axios.get<TickerData>(`${TICKER_API_URL}/${ticker}`);
       const seriesPromise = axios.get<TickerChartData>(`${SERIES_API_URL}/${ticker}`);
       const [detailedResponse, seriesResponse] = await Promise.all([detailedPromise, seriesPromise]);
 
-      setTickerResponse(detailedResponse.data.message);
+      setTickerData(detailedResponse.data);
       setSeriesChartData(seriesResponse.data);
     } catch (error) {
       console.error("Error fetching ticker data:", error);
-      setTickerResponse("Error fetching ticker info.");
+      setTickerData({ stockName: "Error", description: "Failed to fetch ticker info", marketCap: "N/A" });
       setSeriesChartData(null);
     } finally {
       setTickerLoading(false);
@@ -167,7 +157,7 @@ export default function Home() {
       },
       title: {
         display: true,
-        text: `${selectedStock} - 7 Day Hourly Price & Volume`,
+        text: `${selectedStock || "No Stock Selected"} - 7 Day Hourly Price & Volume`,
         color: "#c9d1d9",
       },
       tooltip: {
@@ -177,12 +167,12 @@ export default function Home() {
         titleColor: "#fff",
         bodyColor: "#fff",
         callbacks: {
-          title: () => '',
+          title: () => "",
           label: (context) => {
             if (context.datasetIndex === 0) {
               return `$${context.parsed.y.toFixed(2)}`;
             }
-            return '';
+            return "";
           },
         },
       },
@@ -192,12 +182,14 @@ export default function Home() {
         type: "category" as const,
         grid: { display: false },
         ticks: {
-          callback: function (_value, index: number) { // Changed value to _value and typed as unused
+          callback: function (_value, index: number) {
             const date = seriesChartConfig?.labels[index] as Date;
-            if (date.getHours() === 12) {
-              return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+            if (date && date.getHours() === 12) {
+              return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+                .toString()
+                .padStart(2, "0")}/${date.getFullYear()}`;
             }
-            return '';
+            return "";
           },
           color: "#c9d1d9",
           maxTicksLimit: 7,
@@ -234,13 +226,13 @@ export default function Home() {
           color: "#c9d1d9",
           callback: (value) => `${(Number(value) / 1000).toFixed(0)}K`,
         },
-        max: Math.max(...(seriesChartData?.barData || [])) * 1.2,
+        max: Math.max(...(seriesChartData?.barData || [])) * 1.2 || 1000,
       },
     },
   };
 
   const handleSort = (key: keyof DataItem): void => {
-    const direction = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    const direction = sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
     setSortConfig({ key, direction });
 
     setStockData((prevData) => {
@@ -252,27 +244,24 @@ export default function Home() {
         if (aValue === null) return 1;
         if (bValue === null) return -1;
 
-        if (typeof aValue === 'string' && typeof bValue === 'string') {
-          return direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
         }
-        return direction === 'asc' ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
+        return direction === "asc" ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
       });
       return sortedData;
     });
   };
 
   const getChangeColor = (change: number | null) => {
-    if (change === null || change === undefined) return '';
-    return change < 0 ? 'text-red-500' : 'text-green-500';
+    if (change === null || change === undefined) return "";
+    return change < 0 ? "text-red-500" : "text-green-500";
   };
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
       <button
-        onClick={() => {
-          fetchStockData();
-          fetchAdditionalData();
-        }}
+        onClick={fetchStockData}
         className="p-2 bg-blue-500 text-white rounded mb-4"
       >
         Refresh Data
@@ -285,24 +274,42 @@ export default function Home() {
           <table className="border-collapse border border-gray-700 w-full">
             <thead>
               <tr className="bg-gray-800 text-center">
-                <th className="border border-gray-700 p-1 text-center w-12 cursor-pointer" onClick={() => handleSort("id")}>
-                  ID {sortConfig.key === "id" ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                <th
+                  className="border border-gray-700 p-1 text-center w-12 cursor-pointer"
+                  onClick={() => handleSort("id")}
+                >
+                  ID {sortConfig.key === "id" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
                 </th>
-                <th className="border border-gray-700 p-1 text-center w-20 cursor-pointer" onClick={() => handleSort("cashtag")}>
-                  Stock {sortConfig.key === "cashtag" ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                <th
+                  className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
+                  onClick={() => handleSort("cashtag")}
+                >
+                  Stock {sortConfig.key === "cashtag" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
                 </th>
                 <th className="border border-gray-700 p-1 text-center w-32">Trend</th>
-                <th className="border border-gray-700 p-1 text-center w-20 cursor-pointer" onClick={() => handleSort("chng")}>
-                  Change {sortConfig.key === "chng" ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                <th
+                  className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
+                  onClick={() => handleSort("chng")}
+                >
+                  Change {sortConfig.key === "chng" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
                 </th>
-                <th className="border border-gray-700 p-1 text-center w-24 cursor-pointer" onClick={() => handleSort("latest_price")}>
-                  Latest Price {sortConfig.key === "latest_price" ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                <th
+                  className="border border-gray-700 p-1 text-center w-24 cursor-pointer"
+                  onClick={() => handleSort("latest_price")}
+                >
+                  Latest Price {sortConfig.key === "latest_price" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
                 </th>
-                <th className="border border-gray-700 p-1 text-center w-20 cursor-pointer" onClick={() => handleSort("prev_eod")}>
-                  Prev EOD {sortConfig.key === "prev_eod" ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                <th
+                  className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
+                  onClick={() => handleSort("prev_eod")}
+                >
+                  Prev EOD {sortConfig.key === "prev_eod" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
                 </th>
-                <th className="border border-gray-700 p-1 text-center w-20 cursor-pointer" onClick={() => handleSort("prev_open")}>
-                  Prev Open {sortConfig.key === "prev_open" ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                <th
+                  className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
+                  onClick={() => handleSort("prev_open")}
+                >
+                  Prev Open {sortConfig.key === "prev_open" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
                 </th>
               </tr>
             </thead>
@@ -324,16 +331,18 @@ export default function Home() {
                     </div>
                   </td>
                   <td className={`border border-gray-700 p-1 text-center w-20 ${getChangeColor(item.chng)}`}>
-                    {item.chng !== null && item.chng !== undefined ? item.chng : '-'}
+                    {item.chng !== null && item.chng !== undefined ? item.chng : "-"}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-24">
-                    {item.latest_price !== null && item.latest_price !== undefined ? `$${item.latest_price.toFixed(2)}` : '-'}
+                    {item.latest_price !== null && item.latest_price !== undefined
+                      ? `$${item.latest_price.toFixed(2)}`
+                      : "-"}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-20">
-                    {item.prev_eod !== null && item.prev_eod !== undefined ? item.prev_eod : '-'}
+                    {item.prev_eod !== null && item.prev_eod !== undefined ? item.prev_eod : "-"}
                   </td>
                   <td className="border border-gray-700 p-1 text-center w-20">
-                    {item.prev_open !== null && item.prev_open !== undefined ? item.prev_open : '-'}
+                    {item.prev_open !== null && item.prev_open !== undefined ? item.prev_open : "-"}
                   </td>
                 </tr>
               ))}
@@ -342,43 +351,39 @@ export default function Home() {
         </div>
       )}
 
-      {selectedStock && (
-        <div className="mt-6">
-          {tickerLoading ? (
-            <p>Loading ticker data...</p>
-          ) : (
-            <p className="mt-4 text-base">
-              {tickerResponse || "Click on a ticker symbol to see detailed info."}
-            </p>
-          )}
+      {/* Predefined Polygon.io Data Table */}
+      <div className="mt-6">
+        <h2 className="text-lg font-semibold mb-2">Stock Details{tickerLoading ? " (Loading...)" : ""}</h2>
+        <div className="polygon-table-container">
+          <table className="polygon-table">
+            <thead>
+              <tr className="bg-gray-800">
+                <th className="border border-gray-700 p-2 text-center" style={{ width: "25%" }}>Stock Name</th>
+                <th className="border border-gray-700 p-2 text-center" style={{ width: "50%" }}>Description</th>
+                <th className="border border-gray-700 p-2 text-center" style={{ width: "25%" }}>Market Cap</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="hover:bg-gray-800">
+                <td className="border border-gray-700 p-2 text-center" style={{ width: "25%" }}>
+                  {tickerData.stockName}
+                </td>
+                <td className="border border-gray-700 p-2 text-center" style={{ width: "50%" }}>
+                  {tickerData.description}
+                </td>
+                <td className="border border-gray-700 p-2 text-center" style={{ width: "25%" }}>
+                  {tickerData.marketCap}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-          <h2 className="text-lg font-semibold mt-4">Additional Data for {selectedStock}</h2>
-          {additionalData && additionalData[selectedStock] ? (
-            <table className="border-collapse border border-gray-700 w-full text-center mt-2">
-              <thead>
-                <tr className="bg-gray-800">
-                  <th className="border border-gray-700 p-2 text-center">Market Cap</th>
-                  <th className="border border-gray-700 p-2 text-center">Description</th>
-                  <th className="border border-gray-700 p-2 text-center">Days Till Earnings</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="hover:bg-gray-800">
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].marketCap}</td>
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].companyDescription}</td>
-                  <td className="border border-gray-700 p-2 text-center">{additionalData[selectedStock].daysTillEarnings}</td>
-                </tr>
-              </tbody>
-            </table>
-          ) : (
-            <p>No additional data available for {selectedStock}</p>
-          )}
-
-          {seriesChartData && seriesChartConfig && (
-            <div className="mt-6 chart-container" style={{ height: "400px" }}>
-              <Chart type="bar" data={seriesChartConfig} options={chartOptions} />
-            </div>
-          )}
+      {/* Chart Section */}
+      {seriesChartData && seriesChartConfig && (
+        <div className="mt-6 chart-container" style={{ height: "400px" }}>
+          <Chart type="bar" data={seriesChartConfig} options={chartOptions} />
         </div>
       )}
     </div>
