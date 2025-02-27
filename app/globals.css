@@ -98,8 +98,25 @@ a:hover {
 
 .MarketCanvas {
   background-color: #161b22;
-  padding: 10px;
+  padding: 6px; /* Reduced from 10px */
   border: 1px solid #30363d;
+}
+
+@media (max-width: 767px) {
+  .MarketCanvas {
+    padding: 4px; /* Further reduced padding on mobile */
+    height: 200px !important; /* Override inline style on mobile */
+  }
+
+  .MarketCanvas canvas {
+    font-size: 9px; /* Reduced font size for chart elements on mobile */
+  }
+}
+
+@media (min-width: 768px) {
+  .MarketCanvas canvas {
+    font-size: 12px; /* Default font size for desktop */
+  }
 }
 
 header {
@@ -141,8 +158,8 @@ header {
 @media (max-width: 767px) {
   .StockLedger th,
   .StockLedger td {
-    padding: 1px; /* Further reduced padding on mobile */
-    font-size: 6px; /* Reduced font size from 10px for a more compact look */
+    padding: 2px; /* Further reduced padding on mobile */
+    font-size: 9px; /* Reduced font size from 10px for a more compact look */
   }
 }
 

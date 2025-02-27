@@ -382,7 +382,7 @@ export default function Home() {
 
       {/* MarketCanvas Section */}
       {marketCanvasData && marketCanvasConfig && (
-        <div className="mt-6 MarketCanvas" style={{ height: "400px" }}>
+        <div className="mt-6 MarketCanvas" style={{ height: "300px" }}>
           <Chart type="bar" data={marketCanvasConfig} options={marketCanvasOptions} />
         </div>
       )}
