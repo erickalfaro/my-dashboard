@@ -177,13 +177,12 @@ export default function Home() {
         titleColor: "#fff",
         bodyColor: "#fff",
         callbacks: {
-          title: () => '', // Remove the title (date) from tooltip
+          title: () => '',
           label: (context) => {
-            // Only show the price (line dataset, index 0)
             if (context.datasetIndex === 0) {
               return `$${context.parsed.y.toFixed(2)}`;
             }
-            return ''; // Hide volume (bar dataset)
+            return '';
           },
         },
       },
@@ -193,7 +192,7 @@ export default function Home() {
         type: "category" as const,
         grid: { display: false },
         ticks: {
-          callback: function (value: any, index: number) {
+          callback: function (_value, index: number) { // Changed value to _value and typed as unused
             const date = seriesChartConfig?.labels[index] as Date;
             if (date.getHours() === 12) {
               return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
