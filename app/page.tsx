@@ -11,12 +11,12 @@ import {
   PointElement,
   LineElement,
   BarElement,
-  TimeScale, // Add TimeScale
+  TimeScale,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
-import "chartjs-adapter-date-fns"; // Import the date adapter
+import "chartjs-adapter-date-fns";
 import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
 import { StockLedger } from "../components/StockLedger";
@@ -31,7 +31,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
-  TimeScale, // Register TimeScale
+  TimeScale,
   Title,
   Tooltip,
   Legend
@@ -86,6 +86,7 @@ export default function Home() {
     key: null,
     direction: "asc",
   });
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // New state for errors
 
   const fetchTickerTapeData = async (): Promise<void> => {
     setLoading(true);
@@ -94,6 +95,7 @@ export default function Home() {
       setTickerTapeData(response.data);
     } catch (error) {
       console.error("Error fetching TickerTape data:", error);
+      setErrorMessage("Failed to load ticker tape data.");
     } finally {
       setLoading(false);
     }
@@ -106,6 +108,7 @@ export default function Home() {
   const handleTickerClick = async (ticker: string): Promise<void> => {
     setStockLedgerLoading(true);
     setPostsLoading(true);
+    setErrorMessage(null); // Clear previous errors
     const cleanTicker = ticker.replace("$", "");
     setSelectedStock(cleanTicker);
     try {
@@ -119,13 +122,20 @@ export default function Home() {
       ]);
 
       setStockLedgerData(ledgerResponse.data);
-      setMarketCanvasData(canvasResponse.data);
+      // Check if canvas data is empty
+      if (canvasResponse.data.lineData.length === 0 || canvasResponse.data.barData.length === 0) {
+        setMarketCanvasData(null);
+        setErrorMessage(`No price/volume data available for ${cleanTicker}.`);
+      } else {
+        setMarketCanvasData(canvasResponse.data);
+      }
       setPostsData(postsResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
-      setStockLedgerData({ stockName: "Error", description: "Failed to fetch ticker info", marketCap: "N/A" });
+      setStockLedgerData({ stockName: cleanTicker, description: "Failed to fetch ticker info", marketCap: "N/A" });
       setMarketCanvasData(null);
       setPostsData([]);
+      setErrorMessage(`Unable to load data for ${cleanTicker}. Please try another ticker.`);
     } finally {
       setStockLedgerLoading(false);
       setPostsLoading(false);
@@ -155,6 +165,7 @@ export default function Home() {
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
       <RefreshButton onClick={fetchTickerTapeData} />
+      {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
       <TickerTape
         data={tickerTapeData}
         loading={loading}

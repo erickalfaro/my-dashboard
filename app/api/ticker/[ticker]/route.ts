@@ -1,4 +1,3 @@
-// app/api/ticker/[ticker]/route.ts
 import { NextResponse } from "next/server";
 import axios from "axios";
 
@@ -45,6 +44,17 @@ export async function GET(req: Request, ctx: TickerContext) {
     return NextResponse.json(tickerData);
   } catch (error) {
     console.error("Error fetching Polygon.io data:", error);
+    // Handle 404 or other errors gracefully
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return NextResponse.json(
+        {
+          stockName: ticker,
+          description: "Ticker not found in Polygon.io database",
+          marketCap: "N/A",
+        },
+        { status: 200 } // Return 200 with fallback data
+      );
+    }
     return NextResponse.json(
       { error: `Failed to fetch data for ${ticker}` },
       { status: 500 }

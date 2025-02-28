@@ -85,14 +85,14 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
         time: {
           unit: "day", // Base unit is day
           displayFormats: {
-            day: "MM-dd-yy", // Format for ticks
+            day: "DD-dd-yy", // Format for ticks
           },
           tooltipFormat: "MM-dd-yy HH:mm", // Tooltip shows date and time
         },
         grid: { display: false },
         ticks: {
           source: "auto", // Let Chart.js pick ticks from the data
-          callback: (value, index, _ticks) => {
+          callback: (value) => {
             const date = new Date(value);
             const isNoon = date.getHours() === 12 && date.getMinutes() === 0;
             if (isNoon) {

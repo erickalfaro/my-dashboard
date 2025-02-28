@@ -35,7 +35,7 @@ export async function GET(req: Request, ctx: ContextParams) {
   try {
     const url = `https://data.alpaca.markets/v2/stocks/${ticker}/bars`;
     const response = await axios.get<{
-      bars: AlpacaBar[];
+      bars: AlpacaBar[] | null;
       symbol: string;
       next_page_token: string | null;
     }>(url, {
@@ -45,9 +45,9 @@ export async function GET(req: Request, ctx: ContextParams) {
       },
       params: {
         timeframe: "1Hour",
-        limit: 168, // 7 days * 24 hours = 168 hours
+        limit: 168, // 7 days * 24 hours
         adjustment: "raw",
-        start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+        start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         end: new Date().toISOString(),
       },
     });
@@ -55,8 +55,8 @@ export async function GET(req: Request, ctx: ContextParams) {
     const bars = response.data.bars || [];
     console.log(`Alpaca response for ${ticker}:`, response.data);
 
-    const lineData = bars.map((bar: AlpacaBar) => bar.c); // Close price for hourly line plot
-    const barData = bars.map((bar: AlpacaBar) => bar.v);  // Volume for bar plot
+    const lineData = bars.length ? bars.map((bar: AlpacaBar) => bar.c) : [];
+    const barData = bars.length ? bars.map((bar: AlpacaBar) => bar.v) : [];
 
     console.log(`Processed data for ${ticker}:`, { ticker, lineData, barData });
 
@@ -67,9 +67,14 @@ export async function GET(req: Request, ctx: ContextParams) {
     });
   } catch (error) {
     console.error("Error fetching Alpaca data:", error);
+    // Return empty arrays if the request fails or ticker is invalid
     return NextResponse.json(
-      { error: "Failed to fetch hourly data from Alpaca" },
-      { status: 500 }
+      {
+        ticker,
+        lineData: [],
+        barData: [],
+      },
+      { status: 200 } // Return 200 with empty data
     );
   }
 }
