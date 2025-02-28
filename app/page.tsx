@@ -11,10 +11,12 @@ import {
   PointElement,
   LineElement,
   BarElement,
+  TimeScale, // Add TimeScale
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
+import "chartjs-adapter-date-fns"; // Import the date adapter
 import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
 import { StockLedger } from "../components/StockLedger";
@@ -29,6 +31,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
+  TimeScale, // Register TimeScale
   Title,
   Tooltip,
   Legend

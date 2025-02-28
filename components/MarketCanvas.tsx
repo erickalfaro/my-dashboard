@@ -18,14 +18,18 @@ interface MarketCanvasProps {
 export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock }) => {
   if (!data) return null;
 
-  const labels = Array.from({ length: data.lineData.length }, (_, i) => {
+  // Generate hourly labels for the past 7 days (168 hours)
+  const hourlyLabels = Array.from({ length: data.lineData.length }, (_, i) => {
     const date = new Date();
     date.setHours(date.getHours() - (data.lineData.length - 1 - i));
     return date;
   });
 
+  // Debugging: Log the labels to verify timestamps
+  console.log("Hourly Labels:", hourlyLabels.map((d) => `${d.toISOString()} - ${d.getHours()}`));
+
   const config: ChartData<"bar" | "line"> = {
-    labels,
+    labels: hourlyLabels, // Full hourly labels for data plotting
     datasets: [
       {
         type: "line" as const,
@@ -80,20 +84,30 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
     },
     scales: {
       x: {
-        type: "category" as const,
+        type: "time" as const,
+        time: {
+          unit: "day", // Base unit is day
+          displayFormats: {
+            day: "MM-dd-yy", // Format for ticks
+          },
+          tooltipFormat: "MM-dd-yy HH:mm", // Tooltip shows date and time
+        },
         grid: { display: false },
         ticks: {
-          callback: function (_value, index: number) {
-            const date = labels[index] as Date;
-            if (date && date.getHours() === 12) {
-              return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+          source: "auto", // Let Chart.js pick ticks from the data
+          callback: (value, index, ticks) => {
+            const date = new Date(value);
+            const isNoon = date.getHours() === 12 && date.getMinutes() === 0;
+            console.log(`Tick ${index}: ${date.toISOString()} - Noon: ${isNoon}`); // Debug tick values
+            if (isNoon) {
+              return `${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1)
                 .toString()
-                .padStart(2, "0")}/${date.getFullYear()}`;
+                .padStart(2, "0")}-${date.getFullYear().toString().slice(-2)}`;
             }
-            return "";
+            return null; // Skip non-12 PM ticks
           },
           color: "#c9d1d9",
-          maxTicksLimit: 7,
+          maxTicksLimit: 7, // Cap at 7 ticks (one per day)
         },
       },
       yPrice: {
