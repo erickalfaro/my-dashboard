@@ -25,9 +25,6 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
     return date;
   });
 
-  // Debugging: Log the labels to verify timestamps
-  console.log("Hourly Labels:", hourlyLabels.map((d) => `${d.toISOString()} - ${d.getHours()}`));
-
   const config: ChartData<"bar" | "line"> = {
     labels: hourlyLabels, // Full hourly labels for data plotting
     datasets: [
@@ -95,10 +92,9 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
         grid: { display: false },
         ticks: {
           source: "auto", // Let Chart.js pick ticks from the data
-          callback: (value, index, ticks) => {
+          callback: (value, index, _ticks) => {
             const date = new Date(value);
             const isNoon = date.getHours() === 12 && date.getMinutes() === 0;
-            console.log(`Tick ${index}: ${date.toISOString()} - Noon: ${isNoon}`); // Debug tick values
             if (isNoon) {
               return `${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1)
                 .toString()
