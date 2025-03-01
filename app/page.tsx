@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import {
   Chart as ChartJS,
@@ -75,7 +75,7 @@ const POSTS_API_URL = "/api/posts";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
-  const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]); // Empty array as initial state
+  const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
   const [stockLedgerData, setStockLedgerData] = useState<StockLedgerData>({
     stockName: "",
     description: "",
@@ -96,6 +96,15 @@ export default function Home() {
     direction: "asc",
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Debounce function
+  const debounce = (func: (...args: any[]) => void, wait: number) => {
+    let timeout: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), wait);
+    };
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -130,44 +139,44 @@ export default function Home() {
     if (user) fetchTickerTapeData();
   }, [user]);
 
-  const handleTickerClick = async (ticker: string): Promise<void> => {
-    setStockLedgerLoading(true);
-    setPostsLoading(true);
-    setErrorMessage(null);
-    const cleanTicker = ticker.replace("$", "");
-    setSelectedStock(cleanTicker);
-    setPostsData([]); // Clear posts immediately
-    setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] }); // Clear chart immediately
-    setStockLedgerData({ stockName: cleanTicker, description: "", marketCap: "" }); // Clear ledger immediately
-    try {
-      const ledgerPromise = axios.get<StockLedgerData>(`${TICKER_API_URL}/${cleanTicker}`);
-      const canvasPromise = axios.get<MarketCanvasData>(`${SERIES_API_URL}/${cleanTicker}`);
-      const postsPromise = axios.get<PostData[]>(`${POSTS_API_URL}/${cleanTicker}`);
-      const [ledgerResponse, canvasResponse, postsResponse] = await Promise.all([
-        ledgerPromise,
-        canvasPromise,
-        postsPromise,
-      ]);
-  
-      setStockLedgerData(ledgerResponse.data);
-      if (canvasResponse.data.lineData.length === 0 || canvasResponse.data.barData.length === 0) {
-        setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
-        setErrorMessage(`No price/volume data available for ${cleanTicker}.`);
-      } else {
-        setMarketCanvasData(canvasResponse.data);
-      }
-      setPostsData(postsResponse.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setStockLedgerData({ stockName: cleanTicker, description: "Failed to fetch ticker info", marketCap: "N/A" });
-      setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
+  const handleTickerClick = useCallback(
+    debounce(async (ticker: string): Promise<void> => {
+      setStockLedgerLoading(true);
+      setPostsLoading(true);
+      setErrorMessage(null);
+      const cleanTicker = ticker.replace("$", "");
+      setSelectedStock(cleanTicker);
       setPostsData([]);
-      setErrorMessage(`Unable to load data for ${cleanTicker}. Please try another ticker.`);
-    } finally {
-      setStockLedgerLoading(false);
-      setPostsLoading(false);
-    }
-  };
+      setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
+      setStockLedgerData({ stockName: cleanTicker, description: "", marketCap: "" });
+      try {
+        const [ledgerResponse, canvasResponse, postsResponse] = await Promise.all([
+          axios.get<StockLedgerData>(`${TICKER_API_URL}/${cleanTicker}`),
+          axios.get<MarketCanvasData>(`${SERIES_API_URL}/${cleanTicker}`),
+          axios.get<PostData[]>(`${POSTS_API_URL}/${cleanTicker}`),
+        ]);
+
+        setStockLedgerData(ledgerResponse.data);
+        if (canvasResponse.data.lineData.length === 0 || canvasResponse.data.barData.length === 0) {
+          setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
+          setErrorMessage(`No price/volume data available for ${cleanTicker}.`);
+        } else {
+          setMarketCanvasData(canvasResponse.data);
+        }
+        setPostsData(postsResponse.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setStockLedgerData({ stockName: cleanTicker, description: "Failed to fetch ticker info", marketCap: "N/A" });
+        setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
+        setPostsData([]);
+        setErrorMessage(`Unable to load data for ${cleanTicker}. Please try another ticker.`);
+      } finally {
+        setStockLedgerLoading(false);
+        setPostsLoading(false);
+      }
+    }, 300),
+    []
+  );
 
   const handleSort = (key: keyof TickerTapeItem): void => {
     const direction = sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
@@ -204,7 +213,12 @@ export default function Home() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
+    <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen relative">
+      {(loading || stockLedgerLoading || postsLoading) && (
+        <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+          <p className="text-white text-lg">Loading...</p>
+        </div>
+      )}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold">Welcome, {user.email}</h1>
         <button

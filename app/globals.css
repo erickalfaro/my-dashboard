@@ -38,49 +38,102 @@ a:hover {
   text-decoration: underline;
 }
 
-.TickerTape {
-  height: 400px; /* Fixed height instead of max-height */
+/* Container styling */
+.TickerTape, .StockLedger, .MarketCanvas, .PostViewer {
+  background-color: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+/* Hover effect for containers */
+.TickerTape:hover, .StockLedger:hover, .MarketCanvas:hover, .PostViewer:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Container header styling */
+.TickerTape > div:first-child,
+.StockLedger > div:first-child,
+.MarketCanvas > div:first-child,
+.PostViewer > div:first-child {
+  background: linear-gradient(to right, #1f2937, #2d3748);
+  padding: 8px 12px;
+  border-bottom: 2px solid #30363d;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  position: relative;
+  z-index: 20;
+  text-align: center;
+}
+
+/* Scrollable content area */
+.TickerTape > div:nth-child(2),
+.StockLedger > div:nth-child(2),
+.MarketCanvas > div:nth-child(2),
+.PostViewer > div:nth-child(2) {
   overflow-y: auto;
-  position: relative; /* For sticky headers */
+  position: relative;
+  height: calc(100% - 36px);
+}
+
+.TickerTape {
+  height: 400px; /* Fixed height */
 }
 
 .TickerTape table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background-color: #161b22;
-  margin-bottom: 20px;
   font-size: 12px;
 }
 
 .TickerTape th,
 .TickerTape td {
   border: 1px solid #30363d;
-  padding: 4px 6px; /* Increased padding for taller rows */
+  padding: 8px 10px;
   text-align: left;
+  transition: background-color 0.2s ease;
 }
 
 .TickerTape th {
   position: sticky;
   top: 0;
-  background-color: #161b22;
+  background-color: #1f2937;
+  color: #e5e7eb;
   z-index: 10;
+  border-bottom: 2px solid #404756;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.TickerTape td {
+  background-color: #161b22;
+}
+
+.TickerTape tr:hover td {
+  background-color: #21262d;
 }
 
 /* Mobile adjustments for TickerTape */
 @media (max-width: 767px) {
   .TickerTape th,
   .TickerTape td {
-    padding: 6px 4px; /* Taller rows on mobile */
+    padding: 6px 8px;
   }
 
   .TickerTape table {
-    font-size: 10px; /* Slightly smaller font on mobile for better fit */
+    font-size: 10px;
   }
 
-  /* Widen the Trends column specifically */
   .TickerTape td:nth-child(3),
   .TickerTape th:nth-child(3) {
-    min-width: 100px; /* Wider Trends column on mobile */
+    min-width: 100px;
   }
 }
 
@@ -88,7 +141,7 @@ a:hover {
 @media (min-width: 768px) {
   .TickerTape td:nth-child(3),
   .TickerTape th:nth-child(3) {
-    min-width: 140px; /* Even wider on desktop */
+    min-width: 140px;
   }
 }
 
@@ -97,33 +150,30 @@ a:hover {
 }
 
 .MarketCanvas {
-  height: 400px; /* Consistent with others */
-  overflow-y: auto;
-  position: relative;
-  background-color: #161b22;
-  padding: 6px;
-  border: 1px solid #30363d;
+  height: 400px; /* Fixed height */
+  margin-top: 24px; /* Space between StockLedger and MarketCanvas */
 }
 
-/* Remove inline height from the chart container */
 .MarketCanvas > div:nth-child(2) {
-  height: calc(100% - 40px); /* Adjust for header height */
+  height: calc(100% - 36px);
+  background-color: #161b22;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 
 @media (max-width: 767px) {
   .MarketCanvas {
-    padding: 4px; /* Further reduced padding on mobile */
     height: 200px !important; /* Override inline style on mobile */
   }
 
   .MarketCanvas canvas {
-    font-size: 9px; /* Reduced font size for chart elements on mobile */
+    font-size: 9px;
   }
 }
 
 @media (min-width: 768px) {
   .MarketCanvas canvas {
-    font-size: 12px; /* Default font size for desktop */
+    font-size: 12px;
   }
 }
 
@@ -133,106 +183,120 @@ header {
 }
 
 .StockLedger {
-  min-height: 80px; /* Reduced from 100px for a shorter default height */
-  overflow-y: auto;
-}
-
-@media (max-width: 767px) {
-  .StockLedger {
-    max-height: 100px; /* Reduced from 120px */
-  }
-}
-
-@media (min-width: 768px) {
-  .StockLedger {
-    max-height: 200px; /* Unchanged for desktop */
-  }
+  height: 240px; /* Fixed height */
 }
 
 .StockLedger table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background-color: #161b22;
-  font-size: 12px; /* Default font size */
+  font-size: 12px;
 }
 
 .StockLedger th,
 .StockLedger td {
   border: 1px solid #30363d;
-  padding: 6px; /* Reduced default padding from 8px */
-  text-align: center;
+  padding: 8px 10px;
+  transition: background-color 0.2s ease;
 }
 
-@media (max-width: 767px) {
-  .StockLedger th,
-  .StockLedger td {
-    padding: 2px; /* Further reduced padding on mobile */
-    font-size: 9px; /* Reduced font size from 10px for a more compact look */
-  }
+/* Stock Name (1st column) - top-center */
+.StockLedger th:nth-child(1),
+.StockLedger td:nth-child(1) {
+  text-align: center;
+  vertical-align: top;
+}
+
+/* Description (2nd column) - top-left */
+.StockLedger th:nth-child(2),
+.StockLedger td:nth-child(2) {
+  text-align: left;
+  vertical-align: top;
+}
+
+/* Market Cap (3rd column) - top-center */
+.StockLedger th:nth-child(3),
+.StockLedger td:nth-child(3) {
+  text-align: center;
+  vertical-align: top;
 }
 
 .StockLedger th {
   position: sticky;
   top: 0;
-  background-color: #161b22;
+  background-color: #1f2937;
+  color: #e5e7eb;
   z-index: 10;
+  border-bottom: 2px solid #404756;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.StockLedger td {
+  background-color: #161b22;
+}
+
+.StockLedger tr:hover td {
+  background-color: #21262d;
+}
+
+@media (max-width: 767px) {
+  .StockLedger th,
+  .StockLedger td {
+    padding: 4px 6px;
+  }
+
+  .StockLedger table {
+    font-size: 9px;
+  }
 }
 
 .PostViewer {
-  min-height: 200px; /* Minimum size */
-  max-height: 400px; /* Maximum size (previously just height) */
-  overflow-y: auto;
-  position: relative;
+  height: 400px; /* Fixed height */
 }
 
 .PostViewer table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background-color: #161b22;
-  margin-bottom: 20px;
   font-size: 12px;
 }
 
 .PostViewer th,
 .PostViewer td {
   border: 1px solid #30363d;
-  padding: 4px 6px;
+  padding: 8px 10px;
   text-align: left;
+  transition: background-color 0.2s ease;
 }
 
 .PostViewer th {
   position: sticky;
   top: 0;
-  background-color: #161b22;
+  background-color: #1f2937;
+  color: #e5e7eb;
   z-index: 10;
+  border-bottom: 2px solid #404756;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.PostViewer td {
+  background-color: #161b22;
+}
+
+.PostViewer tr:hover td {
+  background-color: #21262d;
 }
 
 @media (max-width: 767px) {
   .PostViewer th,
   .PostViewer td {
-    padding: 6px 4px;
+    padding: 6px 8px;
   }
 
   .PostViewer table {
     font-size: 10px;
   }
-}
-
-.TickerTape,
-.StockLedger,
-.MarketCanvas,
-.PostViewer {
-  position: relative; /* Ensure the container is a positioning context */
-  height: 400px; /* Existing height for TickerTape and PostViewer */
-  overflow-y: auto; /* Enable scrolling */
-}
-
-.TickerTape > div:first-child,
-.StockLedger > div:first-child,
-.MarketCanvas > div:first-child,
-.PostViewer > div:first-child {
-  position: sticky;
-  top: 0;
-  z-index: 20; /* Higher than table headers (z-index: 10) */
-  background-color: #1f2937; /* Match bg-gray-800 */
 }
