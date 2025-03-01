@@ -26,6 +26,7 @@ import { StockLedger } from "../components/StockLedger";
 import { MarketCanvas } from "../components/MarketCanvas";
 import { PostViewer } from "../components/PostViewer";
 
+// Register ChartJS components
 ChartJS.register(
   LineController,
   BarController,
@@ -74,17 +75,21 @@ const POSTS_API_URL = "/api/posts";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
-  const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
+  const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]); // Empty array as initial state
   const [stockLedgerData, setStockLedgerData] = useState<StockLedgerData>({
-    stockName: "N/A",
-    description: "Select a ticker to view details",
-    marketCap: "N/A",
+    stockName: "",
+    description: "",
+    marketCap: "",
   });
+  const [marketCanvasData, setMarketCanvasData] = useState<MarketCanvasData>({
+    ticker: "",
+    lineData: [],
+    barData: [],
+  });
+  const [postsData, setPostsData] = useState<PostData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
-  const [marketCanvasData, setMarketCanvasData] = useState<MarketCanvasData | null>(null);
   const [stockLedgerLoading, setStockLedgerLoading] = useState<boolean>(false);
-  const [postsData, setPostsData] = useState<PostData[]>([]);
   const [postsLoading, setPostsLoading] = useState<boolean>(false);
   const [sortConfig, setSortConfig] = useState<{ key: keyof TickerTapeItem | null; direction: "asc" | "desc" }>({
     key: null,
@@ -143,7 +148,7 @@ export default function Home() {
 
       setStockLedgerData(ledgerResponse.data);
       if (canvasResponse.data.lineData.length === 0 || canvasResponse.data.barData.length === 0) {
-        setMarketCanvasData(null);
+        setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
         setErrorMessage(`No price/volume data available for ${cleanTicker}.`);
       } else {
         setMarketCanvasData(canvasResponse.data);
@@ -152,7 +157,7 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching data:", error);
       setStockLedgerData({ stockName: cleanTicker, description: "Failed to fetch ticker info", marketCap: "N/A" });
-      setMarketCanvasData(null);
+      setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
       setPostsData([]);
       setErrorMessage(`Unable to load data for ${cleanTicker}. Please try another ticker.`);
     } finally {

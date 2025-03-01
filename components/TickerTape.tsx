@@ -31,87 +31,99 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
   const getChangeColor = (change: number | null) =>
     change === null || change === undefined ? "" : change < 0 ? "text-red-500" : "text-green-500";
 
-  if (loading) return <p>Loading TickerTape data...</p>;
-
   return (
-    <div className="TickerTape">
-      <table className="border-collapse border border-gray-700 w-full">
-        <thead>
-          <tr className="bg-gray-800 text-center">
-            <th
-              className="border border-gray-700 p-1 text-center w-12 cursor-pointer"
-              onClick={() => onSort("id")}
-            >
-              ID {sortConfig.key === "id" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-            </th>
-            <th
-              className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
-              onClick={() => onSort("cashtag")}
-            >
-              Stock {sortConfig.key === "cashtag" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-            </th>
-            <th className="border border-gray-700 p-1 text-center w-32">Trend</th>
-            <th
-              className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
-              onClick={() => onSort("chng")}
-            >
-              Change {sortConfig.key === "chng" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-            </th>
-            <th
-              className="border border-gray-700 p-1 text-center w-24 cursor-pointer"
-              onClick={() => onSort("latest_price")}
-            >
-              Latest Price {sortConfig.key === "latest_price" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-            </th>
-            <th
-              className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
-              onClick={() => onSort("prev_eod")}
-            >
-              Prev EOD {sortConfig.key === "prev_eod" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-            </th>
-            <th
-              className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
-              onClick={() => onSort("prev_open")}
-            >
-              Prev Open {sortConfig.key === "prev_open" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item) => (
-            <tr key={item.id} className="hover:bg-gray-800 text-center">
-              <td className="border border-gray-700 p-1 text-center w-12">{item.id}</td>
-              <td
-                className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline text-center w-20"
-                onClick={() => onTickerClick(item.cashtag)}
+    <div className="mt-6 TickerTape">
+      {/* Slick Header */}
+      <div className="bg-gray-800 text-white text-lg font-semibold p-2 rounded-t-md shadow-md">
+        Ticker Tape {loading ? "(Updating...)" : ""}
+      </div>
+      <div className="overflow-hidden rounded-b-md border border-gray-700">
+        <table className="border-collapse w-full">
+          <thead>
+            <tr className="bg-gray-800 text-center">
+              <th
+                className="border border-gray-700 p-1 text-center w-12 cursor-pointer"
+                onClick={() => onSort("id")}
               >
-                {item.cashtag}
-              </td>
-              <td className="border border-gray-700 p-0 text-center w-32">
-                <div className="w-full h-full">
-                  <Sparklines data={item.trend}>
-                    <SparklinesLine color="white" style={{ strokeWidth: 1 }} />
-                  </Sparklines>
-                </div>
-              </td>
-              <td className={`border border-gray-700 p-1 text-center w-20 ${getChangeColor(item.chng)}`}>
-                {item.chng !== null && item.chng !== undefined ? item.chng : "-"}
-              </td>
-              <td className="border border-gray-700 p-1 text-center w-24">
-                {item.latest_price !== null && item.latest_price !== undefined
-                  ? `$${item.latest_price.toFixed(2)}`
-                  : "-"}
-              </td>
-              <td className="border border-gray-700 p-1 text-center w-20">
-                {item.prev_eod !== null && item.prev_eod !== undefined ? item.prev_eod : "-"}
-              </td>
-              <td className="border border-gray-700 p-1 text-center w-20">
-                {item.prev_open !== null && item.prev_open !== undefined ? item.prev_open : "-"}
-              </td>
+                ID {sortConfig.key === "id" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th
+                className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
+                onClick={() => onSort("cashtag")}
+              >
+                Stock {sortConfig.key === "cashtag" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th className="border border-gray-700 p-1 text-center w-32">Trend</th>
+              <th
+                className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
+                onClick={() => onSort("chng")}
+              >
+                Change {sortConfig.key === "chng" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th
+                className="border border-gray-700 p-1 text-center w-24 cursor-pointer"
+                onClick={() => onSort("latest_price")}
+              >
+                Latest Price {sortConfig.key === "latest_price" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th
+                className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
+                onClick={() => onSort("prev_eod")}
+              >
+                Prev EOD {sortConfig.key === "prev_eod" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+              </th>
+              <th
+                className="border border-gray-700 p-1 text-center w-20 cursor-pointer"
+                onClick={() => onSort("prev_open")}
+              >
+                Prev Open {sortConfig.key === "prev_open" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.length > 0 ? (
+              data.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-800 text-center">
+                  <td className="border border-gray-700 p-1 text-center w-12">{item.id}</td>
+                  <td
+                    className="border border-gray-700 p-1 cursor-pointer text-blue-400 hover:underline text-center w-20"
+                    onClick={() => onTickerClick(item.cashtag)}
+                  >
+                    {item.cashtag}
+                  </td>
+                  <td className="border border-gray-700 p-0 text-center w-32">
+                    <div className="w-full h-full">
+                      <Sparklines data={item.trend}>
+                        <SparklinesLine color="white" style={{ strokeWidth: 1 }} />
+                      </Sparklines>
+                    </div>
+                  </td>
+                  <td className={`border border-gray-700 p-1 text-center w-20 ${getChangeColor(item.chng)}`}>
+                    {item.chng !== null && item.chng !== undefined ? item.chng : "-"}
+                  </td>
+                  <td className="border border-gray-700 p-1 text-center w-24">
+                    {item.latest_price !== null && item.latest_price !== undefined
+                      ? `$${item.latest_price.toFixed(2)}`
+                      : "-"}
+                  </td>
+                  <td className="border border-gray-700 p-1 text-center w-20">
+                    {item.prev_eod !== null && item.prev_eod !== undefined ? item.prev_eod : "-"}
+                  </td>
+                  <td className="border border-gray-700 p-1 text-center w-20">
+                    {item.prev_open !== null && item.prev_open !== undefined ? item.prev_open : "-"}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} className="border border-gray-700 p-4 text-center">
+                  No data available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

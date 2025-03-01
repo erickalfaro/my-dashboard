@@ -11,22 +11,22 @@ interface MarketCanvasData {
 }
 
 interface MarketCanvasProps {
-  data: MarketCanvasData | null;
+  data: MarketCanvasData;
   selectedStock: string | null;
 }
 
 export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock }) => {
-  if (!data) return null;
-
-  // Generate hourly labels for the past 7 days (168 hours)
-  const hourlyLabels = Array.from({ length: data.lineData.length }, (_, i) => {
-    const date = new Date();
-    date.setHours(date.getHours() - (data.lineData.length - 1 - i));
-    return date;
-  });
+  // Generate hourly labels for the past 7 days (168 hours) if data exists
+  const hourlyLabels = data.lineData.length
+    ? Array.from({ length: data.lineData.length }, (_, i) => {
+        const date = new Date();
+        date.setHours(date.getHours() - (data.lineData.length - 1 - i));
+        return date;
+      })
+    : [];
 
   const config: ChartData<"bar" | "line"> = {
-    labels: hourlyLabels, // Full hourly labels for data plotting
+    labels: hourlyLabels,
     datasets: [
       {
         type: "line" as const,
@@ -50,10 +50,10 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
     ],
   };
 
-  const priceMin = Math.min(...data.lineData);
-  const priceMax = Math.max(...data.lineData);
+  const priceMin = data.lineData.length ? Math.min(...data.lineData) : 0;
+  const priceMax = data.lineData.length ? Math.max(...data.lineData) : 100;
   const priceRange = priceMax - priceMin;
-  const buffer = priceRange * 0.1;
+  const buffer = priceRange * 0.1 || 10;
   const yPriceMin = priceMin - buffer;
   const yPriceMax = priceMax + buffer;
 
@@ -83,15 +83,13 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
       x: {
         type: "time" as const,
         time: {
-          unit: "day", // Base unit is day
-          displayFormats: {
-            day: "DD-dd-yy", // Format for ticks
-          },
-          tooltipFormat: "MM-dd-yy HH:mm", // Tooltip shows date and time
+          unit: "day",
+          displayFormats: { day: "DD-dd-yy" },
+          tooltipFormat: "MM-dd-yy HH:mm",
         },
         grid: { display: false },
         ticks: {
-          source: "auto", // Let Chart.js pick ticks from the data
+          source: "auto",
           callback: (value) => {
             const date = new Date(value);
             const isNoon = date.getHours() === 12 && date.getMinutes() === 0;
@@ -100,10 +98,10 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
                 .toString()
                 .padStart(2, "0")}-${date.getFullYear().toString().slice(-2)}`;
             }
-            return null; // Skip non-12 PM ticks
+            return null;
           },
           color: "#c9d1d9",
-          maxTicksLimit: 7, // Cap at 7 ticks (one per day)
+          maxTicksLimit: 7,
         },
       },
       yPrice: {
@@ -121,14 +119,24 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
         title: { display: true, text: "Volume", color: "#c9d1d9" },
         grid: { display: false },
         ticks: { color: "#c9d1d9", callback: (value) => `${(Number(value) / 1000).toFixed(0)}K` },
-        max: Math.max(...data.barData) * 1.2 || 1000,
+        max: data.barData.length ? Math.max(...data.barData) * 1.2 || 1000 : 1000,
       },
     },
   };
 
   return (
-    <div className="mt-6 MarketCanvas" style={{ height: "300px" }}>
-      <Chart type="bar" data={config} options={options} />
+    <div className="mt-6 MarketCanvas">
+      {/* Slick Header */}
+      <div className="bg-gray-800 text-white text-lg font-semibold p-2 rounded-t-md shadow-md">
+        Market Canvas
+      </div>
+      <div className="rounded-b-md border border-gray-700 p-6" style={{ height: "300px" }}>
+        {data.lineData.length > 0 ? (
+          <Chart type="bar" data={config} options={options} />
+        ) : (
+          <p className="text-center mt-20">No chart data available</p>
+        )}
+      </div>
     </div>
   );
 };
