@@ -4,7 +4,11 @@ import { supabase } from "../../../../lib/supabase";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+
+  // Determine the base URL dynamically
+  const host = request.headers.get("host") || "localhost:3000";
+  const protocol = host.includes("localhost") ? "http" : "https";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
 
   if (code) {
     try {

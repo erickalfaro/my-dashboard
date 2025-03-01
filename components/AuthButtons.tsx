@@ -3,20 +3,25 @@
 import { supabase } from "../lib/supabase";
 
 export const AuthButtons: React.FC = () => {
+  const getBaseUrl = () => {
+    return process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+  };
+
   const signInWithGoogle = async () => {
+    const baseUrl = getBaseUrl();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/`,
+        redirectTo: `${baseUrl}/api/auth/callback?next=/`,
       },
     });
     if (error) console.error("Error signing in with Google:", error);
   };
 
   const signInWithTwitter = async () => {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    const baseUrl = getBaseUrl();
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider: "twitter", // Fixed: Changed from "google" to "twitter"
       options: {
         redirectTo: `${baseUrl}/api/auth/callback?next=/`,
       },
