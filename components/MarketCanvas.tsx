@@ -185,7 +185,7 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
 
   return (
     <div className="mt-6 MarketCanvas">
-      <div className="bg-gray-800 text-white p-2 rounded-t-md shadow-md">
+      <div className="container-header">
         Market Canvas
       </div>
       <div className="rounded-b-md border border-gray-700">

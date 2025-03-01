@@ -12,12 +12,16 @@ interface PostViewerProps {
 }
 
 export const PostViewer: React.FC<PostViewerProps> = ({ data, loading, selectedStock }) => {
+  const handlePostClick = () => {
+    window.open("https://google.com", "_blank");
+  };
+
   return (
     <div className="mt-6 PostViewer" key={selectedStock || "no-stock"}>
-      <div className="bg-gray-800 text-white text-lg font-semibold p-2 rounded-t-md shadow-md">
+      <div className="container-header">
         Post Viewer {loading ? "(Loading...)" : ""}
       </div>
-      <div className="overflow-hidden rounded-b-md border border-gray-700">
+      <div className="container-content">
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-800">
@@ -34,7 +38,11 @@ export const PostViewer: React.FC<PostViewerProps> = ({ data, loading, selectedS
               </tr>
             ) : data.length > 0 ? (
               data.map((post, index) => (
-                <tr key={index} className="hover:bg-gray-800">
+                <tr
+                  key={index}
+                  className="hover:bg-gray-800 cursor-pointer"
+                  onClick={handlePostClick}
+                >
                   <td className="border border-gray-700 p-1 text-center">{post.hours.toFixed(1)}</td>
                   <td className="border border-gray-700 p-1 text-left">{post.text}</td>
                 </tr>

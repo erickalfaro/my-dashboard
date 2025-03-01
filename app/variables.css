@@ -1,23 +1,29 @@
 :root {
-    --background: #ffffff;
-    --foreground: #171717;
-    --container-bg: #161b22;
-    --Border-color: #30363d;
-    --header-gradient-start: #1f2937;
-    --header-gradient-end: #2d3748;
-    --text-primary: #c9d1d9;
-    --link-color: #58a6ff;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-    --ticker-height: 300px;
-    --market-height: 300px;
-    --ledger-height: 180px;
-    --post-height: 300px;
-  }
-  
-  @media (prefers-color-scheme: dark) {
-    :root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --container-bg: #161b22;
+  --Border-color: #30363d;
+  --header-gradient-start: #1f2937;
+  --header-gradient-end: #2d3748;
+  --text-primary: #c9d1d9;
+  --link-color: #58a6ff;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --ticker-height: 300px; /* Default for mobile */
+  --market-height: 300px;
+  --ledger-height: 180px;
+  --post-height: 300px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
       --background: #0a0a0a;
       --foreground: #ededed;
-    }
   }
+}
+
+@media (min-width: 768px) {
+  :root {
+      --ticker-height: 360px; /* 20% larger (300px * 1.2 = 360px) for desktop */
+  }
+}

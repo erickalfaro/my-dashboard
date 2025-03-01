@@ -14,12 +14,11 @@ interface StockLedgerProps {
 export const StockLedger: React.FC<StockLedgerProps> = ({ data, loading }) => {
   return (
     <div className="mt-6 StockLedger">
-      {/* Slick Header */}
-      <div className="bg-gray-800 text-white text-lg font-semibold p-2 rounded-t-md shadow-md">
+      <div className="container-header">
         Stock Ledger {loading ? "(Loading...)" : ""}
       </div>
-      <div className="overflow-hidden rounded-b-md border border-gray-700">
-        <table className="w-full">
+      <div className="container-content">
+        <table className="w-full border-collapse">
           <thead>
             <tr className="bg-gray-800">
               <th className="border border-gray-700 p-2 text-center" style={{ width: "25%" }}>Stock Name</th>

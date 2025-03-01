@@ -33,11 +33,10 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
 
   return (
     <div className="mt-6 TickerTape">
-      {/* Slick Header */}
-      <div className="bg-gray-800 text-white text-lg font-semibold p-2 rounded-t-md shadow-md">
+      <div className="container-header">
         Ticker Tape {loading ? "(Updating...)" : ""}
       </div>
-      <div className="overflow-hidden rounded-b-md border border-gray-700">
+      <div className="container-content">
         <table className="border-collapse w-full">
           <thead>
             <tr className="bg-gray-800 text-center">
@@ -92,7 +91,7 @@ export const TickerTape: React.FC<TickerTapeProps> = ({
                     {item.cashtag}
                   </td>
                   <td className="border border-gray-700 p-0 text-center w-32">
-                    <div className="w-full h-full">
+                    <div className="w-full h-full overflow-hidden">
                       <Sparklines data={item.trend}>
                         <SparklinesLine color="white" style={{ strokeWidth: 1 }} />
                       </Sparklines>
