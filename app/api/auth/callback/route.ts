@@ -6,12 +6,12 @@ export async function GET(request: Request) {
   const code = url.searchParams.get("code");
 
   // Determine the base URL dynamically
-  const isVercel = !!process.env.VERCEL_URL; // True if running on Vercel
-  const baseUrl = isVercel
-    ? `https://${process.env.VERCEL_URL}` // Use Vercel deployment URL
-    : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"; // Fallback to local
+  const isLocal = process.env.NODE_ENV === "development";
+  const baseUrl = isLocal
+    ? "http://localhost:3000"
+    : process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}`;
 
-  console.log("Callback baseUrl:", baseUrl); // Debug
+  console.log("Callback baseUrl:", baseUrl);
 
   if (code) {
     try {

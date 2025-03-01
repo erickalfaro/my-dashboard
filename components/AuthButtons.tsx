@@ -4,20 +4,21 @@ import { supabase } from "../lib/supabase";
 
 export const AuthButtons: React.FC = () => {
   const getBaseUrl = () => {
-    // Use window.location.origin in the browser, fallback to NEXT_PUBLIC_BASE_URL
-    const baseUrl = typeof window !== "undefined" 
-      ? window.location.origin 
-      : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    console.log("AuthButtons baseUrl:", baseUrl); // Debug
-    return baseUrl;
+    if (typeof window !== "undefined") {
+      // Use the current browser URL for client-side
+      return window.location.origin;
+    }
+    // Server-side: Use environment variable or default to localhost
+    return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   };
 
   const signInWithGoogle = async () => {
     const baseUrl = getBaseUrl();
+    console.log("Signing in with baseUrl:", baseUrl);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${baseUrl}/api/auth/callback?next=/`,
+        redirectTo: `${baseUrl}/api/auth/callback`,
       },
     });
     if (error) console.error("Error signing in with Google:", error);
