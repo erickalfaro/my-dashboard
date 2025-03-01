@@ -1,16 +1,13 @@
 "use client";
 
 import { supabase } from "../lib/supabase";
-import { useRouter } from "next/navigation";
 
 export const AuthButtons: React.FC = () => {
-  const router = useRouter();
-
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: `${window.location.origin}/api/auth/callback?next=/`,
       },
     });
     if (error) console.error("Error signing in with Google:", error);
@@ -20,7 +17,7 @@ export const AuthButtons: React.FC = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "twitter",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
+        redirectTo: `${window.location.origin}/api/auth/callback?next=/`,
       },
     });
     if (error) console.error("Error signing in with Twitter:", error);

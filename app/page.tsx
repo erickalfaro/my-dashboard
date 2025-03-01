@@ -17,6 +17,7 @@ import {
   Legend,
 } from "chart.js";
 import "chartjs-adapter-date-fns";
+import { User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { AuthButtons } from "../components/AuthButtons";
 import { RefreshButton } from "../components/RefreshButton";
@@ -72,7 +73,7 @@ const SERIES_API_URL = "/api/series";
 const POSTS_API_URL = "/api/posts";
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
   const [stockLedgerData, setStockLedgerData] = useState<StockLedgerData>({
     stockName: "N/A",

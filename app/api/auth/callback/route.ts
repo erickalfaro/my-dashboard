@@ -7,14 +7,14 @@ export async function GET(request: Request) {
 
   if (code) {
     try {
-      const { data: _session, error } = await supabase.auth.exchangeCodeForSession(code); // Renamed to _session to indicate it's unused
+      const { data: _session, error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) throw error;
-      return NextResponse.redirect("http://localhost:3000/"); // Hardcoded for testing, we'll adjust for Vercel
+      return NextResponse.redirect(new URL("/", request.url)); // Relative redirect to root
     } catch (error) {
       console.error("Error exchanging code for session:", error);
-      return NextResponse.redirect("http://localhost:3000/");
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
-  return NextResponse.redirect("http://localhost:3000/");
+  return NextResponse.redirect(new URL("/", request.url));
 }
