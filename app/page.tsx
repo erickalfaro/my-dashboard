@@ -97,10 +97,13 @@ export default function Home() {
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Debounce function
-  const debounce = (func: (...args: any[]) => void, wait: number) => {
+  // Debounce function with explicit types
+  const debounce = <T extends unknown[]>(
+    func: (...args: T) => void,
+    wait: number
+  ): ((...args: T) => void) => {
     let timeout: NodeJS.Timeout;
-    return (...args: any[]) => {
+    return (...args: T) => {
       clearTimeout(timeout);
       timeout = setTimeout(() => func(...args), wait);
     };
@@ -175,7 +178,7 @@ export default function Home() {
         setPostsLoading(false);
       }
     }, 300),
-    []
+    [] // Explicitly empty dependency array since debounce wraps a static function
   );
 
   const handleSort = (key: keyof TickerTapeItem): void => {
