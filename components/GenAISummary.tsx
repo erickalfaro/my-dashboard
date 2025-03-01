@@ -2,10 +2,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import OpenAI from "openai";
 import ReactMarkdown from "react-markdown";
 import { PostData } from "../types";
-import { SUMMARY_PROMPT } from "../lib/constants"; // Import the prompt
 
 interface GenAISummaryProps {
   postsData: PostData[];
@@ -13,52 +11,37 @@ interface GenAISummaryProps {
   selectedStock: string | null;
 }
 
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
-
 export const GenAISummary: React.FC<GenAISummaryProps> = ({ postsData, loading, selectedStock }) => {
   const [summary, setSummary] = useState<string>("");
   const [summaryLoading, setSummaryLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const generateSummary = async () => {
+    const fetchSummary = async () => {
       if (!postsData.length || !selectedStock) {
         setSummary(`No posts available to summarize for ${selectedStock || "no ticker"}.`);
         return;
       }
 
       setSummaryLoading(true);
-      const combinedText = postsData.map((post) => post.text).join(" ");
-      const promptWithTicker = SUMMARY_PROMPT.replace(/{ticker}/g, selectedStock);
-
       try {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: promptWithTicker,
-            },
-            {
-              role: "user",
-              content: combinedText,
-            },
-          ],
+        const response = await fetch("/api/summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ posts: postsData, ticker: selectedStock }),
         });
 
-        const summaryText = completion.choices[0]?.message?.content || "Failed to generate summary.";
-        setSummary(summaryText);
+        if (!response.ok) throw new Error("Failed to fetch summary");
+        const { summary } = await response.json();
+        setSummary(summary);
       } catch (error) {
-        console.error("Error generating summary:", error);
+        console.error("Error fetching summary:", error);
         setSummary("Error generating summary.");
       } finally {
         setSummaryLoading(false);
       }
     };
 
-    generateSummary();
+    fetchSummary();
   }, [postsData, selectedStock]);
 
   return (
