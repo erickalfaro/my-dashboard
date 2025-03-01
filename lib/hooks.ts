@@ -74,46 +74,49 @@ export function useTickerData(user: User | null) {
   }, [user]);
 
   const handleTickerClick = useCallback(
-    debounce(async (ticker: string): Promise<void> => {
-      setStockLedgerLoading(true);
-      setPostsLoading(true);
-      setErrorMessage(null);
-      const cleanTicker = ticker.replace("$", "");
-      setSelectedStock(cleanTicker);
-      setPostsData([]);
-      setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
-      setStockLedgerData({ stockName: cleanTicker, description: "", marketCap: "" });
-      try {
-        const [ledgerResponse, canvasResponse, postsResponse] = await Promise.all([
-          fetchStockLedgerData(cleanTicker),
-          fetchMarketCanvasData(cleanTicker),
-          fetchPostsData(cleanTicker),
-        ]);
-
-        setStockLedgerData(ledgerResponse);
-        if (canvasResponse.lineData.length === 0 || canvasResponse.barData.length === 0) {
-          setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
-          setErrorMessage(`No price/volume data available for ${cleanTicker}.`);
-        } else {
-          setMarketCanvasData(canvasResponse);
-        }
-        setPostsData(postsResponse);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setStockLedgerData({
-          stockName: cleanTicker,
-          description: "Failed to fetch ticker info",
-          marketCap: "N/A",
-        });
-        setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
+    (ticker: string) => {
+      const debouncedHandleTickerClick = debounce(async (ticker: string): Promise<void> => {
+        setStockLedgerLoading(true);
+        setPostsLoading(true);
+        setErrorMessage(null);
+        const cleanTicker = ticker.replace("$", "");
+        setSelectedStock(cleanTicker);
         setPostsData([]);
-        setErrorMessage(`Unable to load data for ${cleanTicker}. Please try another ticker.`);
-      } finally {
-        setStockLedgerLoading(false);
-        setPostsLoading(false);
-      }
-    }, 300),
-    []
+        setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
+        setStockLedgerData({ stockName: cleanTicker, description: "", marketCap: "" });
+        try {
+          const [ledgerResponse, canvasResponse, postsResponse] = await Promise.all([
+            fetchStockLedgerData(cleanTicker),
+            fetchMarketCanvasData(cleanTicker),
+            fetchPostsData(cleanTicker),
+          ]);
+
+          setStockLedgerData(ledgerResponse);
+          if (canvasResponse.lineData.length === 0 || canvasResponse.barData.length === 0) {
+            setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
+            setErrorMessage(`No price/volume data available for ${cleanTicker}.`);
+          } else {
+            setMarketCanvasData(canvasResponse);
+          }
+          setPostsData(postsResponse);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          setStockLedgerData({
+            stockName: cleanTicker,
+            description: "Failed to fetch ticker info",
+            marketCap: "N/A",
+          });
+          setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });
+          setPostsData([]);
+          setErrorMessage(`Unable to load data for ${cleanTicker}. Please try another ticker.`);
+        } finally {
+          setStockLedgerLoading(false);
+          setPostsLoading(false);
+        }
+      }, 300);
+      debouncedHandleTickerClick(ticker);
+    },
+    [] // No external dependencies needed here since everything is defined within
   );
 
   return {

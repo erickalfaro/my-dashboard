@@ -1,9 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabase";
-import { API_ENDPOINTS } from "../lib/config";
 import { useAuth, useTickerData } from "../lib/hooks";
 import { AuthButtons } from "../components/AuthButtons";
 import { RefreshButton } from "../components/RefreshButton";
@@ -12,6 +9,8 @@ import { StockLedger } from "../components/StockLedger";
 import { MarketCanvas } from "../components/MarketCanvas";
 import { PostViewer } from "../components/PostViewer";
 import { TickerTapeItem } from "../types";
+
+// Removed unused imports: User, supabase, API_ENDPOINTS
 
 export default function Home() {
   const { user, signOut } = useAuth();
@@ -47,7 +46,7 @@ export default function Home() {
       if (aValue === null) return 1;
       if (bValue === null) return -1;
       if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(bValue);
       }
       return direction === "asc" ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
     });

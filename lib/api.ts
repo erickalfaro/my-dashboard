@@ -1,7 +1,7 @@
 import axios from "axios";
-import { StockLedgerData, MarketCanvasData, PostData } from "../types";
+import { StockLedgerData, MarketCanvasData, PostData, TickerTapeItem } from "../types";
 
-export const fetchTickerTapeData = async (): Promise<any[]> => {
+export const fetchTickerTapeData = async (): Promise<TickerTapeItem[]> => {
   const response = await axios.get("/api/mockdata");
   return response.data;
 };
