@@ -97,9 +97,17 @@ a:hover {
 }
 
 .MarketCanvas {
+  height: 400px; /* Consistent with others */
+  overflow-y: auto;
+  position: relative;
   background-color: #161b22;
-  padding: 6px; /* Reduced from 10px */
+  padding: 6px;
   border: 1px solid #30363d;
+}
+
+/* Remove inline height from the chart container */
+.MarketCanvas > div:nth-child(2) {
+  height: calc(100% - 40px); /* Adjust for header height */
 }
 
 @media (max-width: 767px) {
@@ -131,13 +139,13 @@ header {
 
 @media (max-width: 767px) {
   .StockLedger {
-    max-height: 120px; /* Reduced from 150px to make it shorter on mobile */
+    max-height: 100px; /* Reduced from 120px */
   }
 }
 
 @media (min-width: 768px) {
   .StockLedger {
-    max-height: 300px; /* Unchanged for desktop */
+    max-height: 200px; /* Unchanged for desktop */
   }
 }
 
@@ -171,7 +179,8 @@ header {
 }
 
 .PostViewer {
-  height: 400px;
+  min-height: 200px; /* Minimum size */
+  max-height: 400px; /* Maximum size (previously just height) */
   overflow-y: auto;
   position: relative;
 }
@@ -207,4 +216,23 @@ header {
   .PostViewer table {
     font-size: 10px;
   }
+}
+
+.TickerTape,
+.StockLedger,
+.MarketCanvas,
+.PostViewer {
+  position: relative; /* Ensure the container is a positioning context */
+  height: 400px; /* Existing height for TickerTape and PostViewer */
+  overflow-y: auto; /* Enable scrolling */
+}
+
+.TickerTape > div:first-child,
+.StockLedger > div:first-child,
+.MarketCanvas > div:first-child,
+.PostViewer > div:first-child {
+  position: sticky;
+  top: 0;
+  z-index: 20; /* Higher than table headers (z-index: 10) */
+  background-color: #1f2937; /* Match bg-gray-800 */
 }

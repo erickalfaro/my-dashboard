@@ -13,8 +13,7 @@ interface PostViewerProps {
 
 export const PostViewer: React.FC<PostViewerProps> = ({ data, loading, selectedStock }) => {
   return (
-    <div className="mt-6 PostViewer">
-      {/* Slick Header */}
+    <div className="mt-6 PostViewer" key={selectedStock || "no-stock"}>
       <div className="bg-gray-800 text-white text-lg font-semibold p-2 rounded-t-md shadow-md">
         Post Viewer {loading ? "(Loading...)" : ""}
       </div>

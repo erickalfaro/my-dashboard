@@ -136,6 +136,9 @@ export default function Home() {
     setErrorMessage(null);
     const cleanTicker = ticker.replace("$", "");
     setSelectedStock(cleanTicker);
+    setPostsData([]); // Clear posts immediately
+    setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] }); // Clear chart immediately
+    setStockLedgerData({ stockName: cleanTicker, description: "", marketCap: "" }); // Clear ledger immediately
     try {
       const ledgerPromise = axios.get<StockLedgerData>(`${TICKER_API_URL}/${cleanTicker}`);
       const canvasPromise = axios.get<MarketCanvasData>(`${SERIES_API_URL}/${cleanTicker}`);
@@ -145,7 +148,7 @@ export default function Home() {
         canvasPromise,
         postsPromise,
       ]);
-
+  
       setStockLedgerData(ledgerResponse.data);
       if (canvasResponse.data.lineData.length === 0 || canvasResponse.data.barData.length === 0) {
         setMarketCanvasData({ ticker: cleanTicker, lineData: [], barData: [] });

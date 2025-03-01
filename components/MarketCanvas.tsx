@@ -130,7 +130,7 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
       <div className="bg-gray-800 text-white text-lg font-semibold p-2 rounded-t-md shadow-md">
         Market Canvas
       </div>
-      <div className="rounded-b-md border border-gray-700 p-6" style={{ height: "300px" }}>
+      <div className="rounded-b-md border border-gray-700 p-6">
         {data.lineData.length > 0 ? (
           <Chart type="bar" data={config} options={options} />
         ) : (
