@@ -14,10 +14,11 @@ export const AuthButtons: React.FC = () => {
   };
 
   const signInWithTwitter = async () => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "twitter",
+      provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/`,
+        redirectTo: `${baseUrl}/api/auth/callback?next=/`,
       },
     });
     if (error) console.error("Error signing in with Twitter:", error);
