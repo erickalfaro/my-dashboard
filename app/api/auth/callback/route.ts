@@ -5,10 +5,11 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
 
-  // Determine the base URL dynamically
-  const host = request.headers.get("host") || "localhost:3000";
-  const protocol = host.includes("localhost") ? "http" : "https";
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
+  // Use NEXT_PUBLIC_BASE_URL if set, otherwise construct from VERCEL_URL or fallback to localhost
+  const vercelUrl = process.env.VERCEL_URL;
+  const baseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    (vercelUrl ? `https://${vercelUrl}` : "http://localhost:3000");
 
   if (code) {
     try {

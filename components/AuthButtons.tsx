@@ -21,7 +21,7 @@ export const AuthButtons: React.FC = () => {
   const signInWithTwitter = async () => {
     const baseUrl = getBaseUrl();
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "twitter", // Fixed: Changed from "google" to "twitter"
+      provider: "twitter",
       options: {
         redirectTo: `${baseUrl}/api/auth/callback?next=/`,
       },
