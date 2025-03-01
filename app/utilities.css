@@ -1,0 +1,4 @@
+/* Add any custom utilities or overrides here */
+.hover\:bg-gray-800:hover {
+    background-color: #1f252c;
+  }

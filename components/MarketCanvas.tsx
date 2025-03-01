@@ -2,7 +2,37 @@
 
 import React from "react";
 import { Chart } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  LineController,
+  BarController,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  TimeScale,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import "chartjs-adapter-date-fns";
 import { ChartData, ChartOptions } from "chart.js";
+
+// Register Chart.js components locally
+ChartJS.register(
+  LineController,
+  BarController,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  TimeScale,
+  Title,
+  Tooltip,
+  Legend
+);
 
 interface MarketCanvasData {
   ticker: string;
@@ -60,7 +90,7 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
     responsive: true,
     maintainAspectRatio: false,
     layout: {
-      padding: 0, // Remove internal chart padding
+      padding: 0,
     },
     plugins: {
       legend: { display: false },
@@ -73,7 +103,7 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
           weight: "bold",
         },
         padding: {
-          top: 5, // Reduced padding to bring title closer to chart
+          top: 5,
           bottom: 5,
         },
       },
@@ -112,23 +142,23 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
           },
           color: "#c9d1d9",
           maxTicksLimit: 7,
-          padding: 0, // Reduce tick padding
+          padding: 0,
         },
       },
       yPrice: {
         type: "linear" as const,
         position: "left" as const,
-        title: { 
-          display: true, 
-          text: "Price ($)", 
+        title: {
+          display: true,
+          text: "Price ($)",
           color: "#c9d1d9",
-          padding: 2, // Reduce title padding
+          padding: 2,
         },
         grid: { color: "#30363d" },
-        ticks: { 
-          color: "#c9d1d9", 
+        ticks: {
+          color: "#c9d1d9",
           callback: (value) => `$${Number(value).toFixed(2)}`,
-          padding: 2, // Reduce tick padding
+          padding: 2,
         },
         min: yPriceMin,
         max: yPriceMax,
@@ -136,17 +166,17 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
       yVolume: {
         type: "linear" as const,
         position: "right" as const,
-        title: { 
-          display: true, 
-          text: "Volume", 
+        title: {
+          display: true,
+          text: "Volume",
           color: "#c9d1d9",
-          padding: 2, // Reduce title padding
+          padding: 2,
         },
         grid: { display: false },
-        ticks: { 
-          color: "#c9d1d9", 
+        ticks: {
+          color: "#c9d1d9",
           callback: (value) => `${(Number(value) / 1000).toFixed(0)}K`,
-          padding: 2, // Reduce tick padding
+          padding: 2,
         },
         max: data.barData.length ? Math.max(...data.barData) * 1.2 || 1000 : 1000,
       },
