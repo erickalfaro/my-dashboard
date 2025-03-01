@@ -1,5 +1,7 @@
+"use client";
 import { useState, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation"; // Added for redirection
 import { supabase } from "./supabase";
 import { debounce } from "./utils";
 import {
@@ -12,6 +14,7 @@ import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
+  const router = useRouter(); // Added for navigation
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -20,18 +23,29 @@ export function useAuth() {
     };
     fetchUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (event === "SIGNED_OUT") {
+        router.push("/"); // Redirect to login page on sign-out
+        router.refresh(); // Force refresh to clear state
+      }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [router]); // Router added to dependencies
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null); // Clear user state
+      router.push("/"); // Redirect to login page
+      router.refresh(); // Ensure fresh state on redirect
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   return { user, signOut };
