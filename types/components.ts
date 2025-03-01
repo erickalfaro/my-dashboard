@@ -1,3 +1,4 @@
+// types/components.ts
 import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "./ticker";
 
 export interface TickerTapeProps {
@@ -20,6 +21,12 @@ export interface MarketCanvasProps {
 
 export interface PostViewerProps {
   data: PostData[];
+  loading: boolean;
+  selectedStock: string | null;
+}
+
+export interface GenAISummaryProps {
+  postsData: PostData[];
   loading: boolean;
   selectedStock: string | null;
 }

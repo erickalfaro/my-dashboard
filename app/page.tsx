@@ -9,6 +9,7 @@ import { TickerTape } from "../components/TickerTape";
 import { StockLedger } from "../components/StockLedger";
 import { MarketCanvas } from "../components/MarketCanvas";
 import { PostViewer } from "../components/PostViewer";
+import { GenAISummary } from "../components/GenAISummary"; // Add this import
 import { TickerTapeItem } from "../types";
 
 export default function Home() {
@@ -45,7 +46,7 @@ export default function Home() {
       if (aValue === null) return 1;
       if (bValue === null) return -1;
       if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue); // Fixed typo
+        return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
       }
       return direction === "asc" ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
     });
@@ -79,6 +80,7 @@ export default function Home() {
       />
       <MarketCanvas data={marketCanvasData} selectedStock={selectedStock} />
       <StockLedger data={stockLedgerData} loading={stockLedgerLoading} />
+      <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} /> {/* Add this line */}
       <PostViewer data={postsData} loading={postsLoading} selectedStock={selectedStock} />
     </div>
   );

@@ -9,9 +9,10 @@
   --link-color: #58a6ff;
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --ticker-height: 300px; /* Default for mobile */
+  --ticker-height: 300px;
   --market-height: 300px;
   --ledger-height: 180px;
+  --summary-height: 240px; /* Increased from 180px to 240px */
   --post-height: 300px;
 }
 
