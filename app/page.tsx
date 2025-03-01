@@ -17,6 +17,8 @@ import {
   Legend,
 } from "chart.js";
 import "chartjs-adapter-date-fns";
+import { supabase } from "../lib/supabase";
+import { AuthButtons } from "../components/AuthButtons";
 import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
 import { StockLedger } from "../components/StockLedger";
@@ -70,6 +72,7 @@ const SERIES_API_URL = "/api/series";
 const POSTS_API_URL = "/api/posts";
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
   const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
   const [stockLedgerData, setStockLedgerData] = useState<StockLedgerData>({
     stockName: "N/A",
@@ -86,7 +89,23 @@ export default function Home() {
     key: null,
     direction: "asc",
   });
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); // New state for errors
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      setUser(data.session?.user ?? null);
+    };
+    fetchUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const fetchTickerTapeData = async (): Promise<void> => {
     setLoading(true);
@@ -102,13 +121,13 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchTickerTapeData();
-  }, []);
+    if (user) fetchTickerTapeData();
+  }, [user]);
 
   const handleTickerClick = async (ticker: string): Promise<void> => {
     setStockLedgerLoading(true);
     setPostsLoading(true);
-    setErrorMessage(null); // Clear previous errors
+    setErrorMessage(null);
     const cleanTicker = ticker.replace("$", "");
     setSelectedStock(cleanTicker);
     try {
@@ -122,7 +141,6 @@ export default function Home() {
       ]);
 
       setStockLedgerData(ledgerResponse.data);
-      // Check if canvas data is empty
       if (canvasResponse.data.lineData.length === 0 || canvasResponse.data.barData.length === 0) {
         setMarketCanvasData(null);
         setErrorMessage(`No price/volume data available for ${cleanTicker}.`);
@@ -162,8 +180,31 @@ export default function Home() {
     });
   };
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
+  if (!user) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold mb-4">Please Log In</h1>
+        <AuthButtons />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-xl font-bold">Welcome, {user.email}</h1>
+        <button
+          onClick={signOut}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+        >
+          Sign Out
+        </button>
+      </div>
       <RefreshButton onClick={fetchTickerTapeData} />
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
       <TickerTape
