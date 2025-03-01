@@ -4,7 +4,12 @@ import { supabase } from "../lib/supabase";
 
 export const AuthButtons: React.FC = () => {
   const getBaseUrl = () => {
-    return process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+    // Use window.location.origin in the browser, fallback to NEXT_PUBLIC_BASE_URL
+    const baseUrl = typeof window !== "undefined" 
+      ? window.location.origin 
+      : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    console.log("AuthButtons baseUrl:", baseUrl); // Debug
+    return baseUrl;
   };
 
   const signInWithGoogle = async () => {
