@@ -16,7 +16,6 @@ interface MarketCanvasProps {
 }
 
 export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock }) => {
-  // Generate hourly labels for the past 7 days (168 hours) if data exists
   const hourlyLabels = data.lineData.length
     ? Array.from({ length: data.lineData.length }, (_, i) => {
         const date = new Date();
@@ -60,12 +59,23 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
   const options: ChartOptions<"bar" | "line"> = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: 0, // Remove internal chart padding
+    },
     plugins: {
       legend: { display: false },
       title: {
         display: true,
-        text: `${selectedStock || "No Stock Selected"} - 7 Day Hourly Price & Volume`,
+        text: `$${selectedStock || "No Stock Selected"} - 7 Day Hourly Price & Volume`,
         color: "#c9d1d9",
+        font: {
+          size: 18,
+          weight: "bold",
+        },
+        padding: {
+          top: 5, // Reduced padding to bring title closer to chart
+          bottom: 5,
+        },
       },
       tooltip: {
         mode: "index",
@@ -102,23 +112,42 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
           },
           color: "#c9d1d9",
           maxTicksLimit: 7,
+          padding: 0, // Reduce tick padding
         },
       },
       yPrice: {
         type: "linear" as const,
         position: "left" as const,
-        title: { display: true, text: "Price ($)", color: "#c9d1d9" },
+        title: { 
+          display: true, 
+          text: "Price ($)", 
+          color: "#c9d1d9",
+          padding: 2, // Reduce title padding
+        },
         grid: { color: "#30363d" },
-        ticks: { color: "#c9d1d9", callback: (value) => `$${Number(value).toFixed(2)}` },
+        ticks: { 
+          color: "#c9d1d9", 
+          callback: (value) => `$${Number(value).toFixed(2)}`,
+          padding: 2, // Reduce tick padding
+        },
         min: yPriceMin,
         max: yPriceMax,
       },
       yVolume: {
         type: "linear" as const,
         position: "right" as const,
-        title: { display: true, text: "Volume", color: "#c9d1d9" },
+        title: { 
+          display: true, 
+          text: "Volume", 
+          color: "#c9d1d9",
+          padding: 2, // Reduce title padding
+        },
         grid: { display: false },
-        ticks: { color: "#c9d1d9", callback: (value) => `${(Number(value) / 1000).toFixed(0)}K` },
+        ticks: { 
+          color: "#c9d1d9", 
+          callback: (value) => `${(Number(value) / 1000).toFixed(0)}K`,
+          padding: 2, // Reduce tick padding
+        },
         max: data.barData.length ? Math.max(...data.barData) * 1.2 || 1000 : 1000,
       },
     },
@@ -126,11 +155,10 @@ export const MarketCanvas: React.FC<MarketCanvasProps> = ({ data, selectedStock 
 
   return (
     <div className="mt-6 MarketCanvas">
-      {/* Slick Header */}
-      <div className="bg-gray-800 text-white text-lg font-semibold p-2 rounded-t-md shadow-md">
+      <div className="bg-gray-800 text-white p-2 rounded-t-md shadow-md">
         Market Canvas
       </div>
-      <div className="rounded-b-md border border-gray-700 p-6">
+      <div className="rounded-b-md border border-gray-700">
         {data.lineData.length > 0 ? (
           <Chart type="bar" data={config} options={options} />
         ) : (

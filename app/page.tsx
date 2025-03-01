@@ -222,16 +222,16 @@ export default function Home() {
           <p className="text-white text-lg">Loading...</p>
         </div>
       )}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-xl font-bold">Welcome, {user.email}</h1>
+      <div className="header-controls">
+        <h1>Welcome, {user.email}</h1>
+        <RefreshButton onClick={fetchTickerTapeData} />
         <button
           onClick={signOut}
-          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          className="logout-btn text-white hover:bg-red-700"
         >
-          Sign Out
+          Logout
         </button>
       </div>
-      <RefreshButton onClick={fetchTickerTapeData} />
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
       <TickerTape
         data={tickerTapeData}
@@ -240,8 +240,8 @@ export default function Home() {
         onSort={handleSort}
         sortConfig={sortConfig}
       />
-      <StockLedger data={stockLedgerData} loading={stockLedgerLoading} />
       <MarketCanvas data={marketCanvasData} selectedStock={selectedStock} />
+      <StockLedger data={stockLedgerData} loading={stockLedgerLoading} />
       <PostViewer data={postsData} loading={postsLoading} selectedStock={selectedStock} />
     </div>
   );

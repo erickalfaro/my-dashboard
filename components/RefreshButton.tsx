@@ -6,8 +6,8 @@ interface RefreshButtonProps {
 
 export const RefreshButton: React.FC<RefreshButtonProps> = ({ onClick }) => {
   return (
-    <button onClick={onClick} className="p-2 bg-blue-500 text-white rounded mb-4">
-      Refresh Data
+    <button onClick={onClick} className="refresh-btn text-white hover:bg-blue-600">
+      Refresh
     </button>
   );
 };
