@@ -1,8 +1,10 @@
+// components/PostViewer.tsx
 import React from "react";
 
 interface PostData {
   hours: number;
   text: string;
+  tweet_id: number;
 }
 
 interface PostViewerProps {
@@ -12,8 +14,9 @@ interface PostViewerProps {
 }
 
 export const PostViewer: React.FC<PostViewerProps> = ({ data, loading, selectedStock }) => {
-  const handlePostClick = () => {
-    window.open("https://google.com", "_blank");
+  const handlePostClick = (tweetId: number) => {
+    const url = `https://x.com/post/status/${tweetId}`;
+    window.open(url, "_blank");
   };
 
   return (
@@ -41,7 +44,7 @@ export const PostViewer: React.FC<PostViewerProps> = ({ data, loading, selectedS
                 <tr
                   key={index}
                   className="hover:bg-gray-800 cursor-pointer"
-                  onClick={handlePostClick}
+                  onClick={() => handlePostClick(post.tweet_id)}
                 >
                   <td className="border border-gray-700 p-1 text-center">{post.hours.toFixed(1)}</td>
                   <td className="border border-gray-700 p-1 text-left">{post.text}</td>

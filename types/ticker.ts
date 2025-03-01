@@ -1,3 +1,4 @@
+// types/ticker.ts
 export interface TickerTapeItem {
   id: number;
   cashtag: string;
@@ -23,4 +24,5 @@ export interface MarketCanvasData {
 export interface PostData {
   hours: number;
   text: string;
+  tweet_id: number; // Added tweet_id
 }

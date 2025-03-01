@@ -1,3 +1,4 @@
+// app/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -9,8 +10,6 @@ import { StockLedger } from "../components/StockLedger";
 import { MarketCanvas } from "../components/MarketCanvas";
 import { PostViewer } from "../components/PostViewer";
 import { TickerTapeItem } from "../types";
-
-// Removed unused imports: User, supabase, API_ENDPOINTS
 
 export default function Home() {
   const { user, signOut } = useAuth();
@@ -46,7 +45,7 @@ export default function Home() {
       if (aValue === null) return 1;
       if (bValue === null) return -1;
       if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(bValue);
+        return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue); // Fixed typo
       }
       return direction === "asc" ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
     });
@@ -63,11 +62,6 @@ export default function Home() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto bg-gray-900 text-gray-200 min-h-screen relative">
-      {(loading || stockLedgerLoading || postsLoading) && (
-        <div className="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
-          <p className="text-white text-lg">Loading...</p>
-        </div>
-      )}
       <div className="header-controls">
         <h1>Welcome, {user.email}</h1>
         <RefreshButton onClick={fetchTickerTapeData} />

@@ -5,6 +5,7 @@ import { supabase } from "../../../../lib/supabase";
 interface PostData {
   hours: number;
   text: string;
+  tweet_id: number;
 }
 
 interface SupabaseResponse {
@@ -24,21 +25,19 @@ export async function GET(req: Request, ctx: ContextParams) {
     const { data, error } = await supabase
       .from("query_bot_view_json")
       .select("*")
-      .eq("cashtag", ticker); // Removed .single()
+      .eq("cashtag", ticker);
 
     if (error) {
       console.error("Error fetching posts from Supabase:", error);
       return NextResponse.json({ error: "Failed to fetch posts" }, { status: 500 });
     }
 
-    // If no data is returned, send an empty array
     if (!data || data.length === 0) {
       return NextResponse.json([], { status: 200 });
     }
 
-    // Assuming only one row per cashtag for simplicity; adjust if multiple rows are possible
     const posts: PostData[] = (data[0] as SupabaseResponse).json_result || [];
-    return NextResponse.json(posts.sort((a, b) => a.hours - b.hours)); // Sort by hours ascending
+    return NextResponse.json(posts.sort((a, b) => a.hours - b.hours));
   } catch (err) {
     console.error("Unexpected error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
