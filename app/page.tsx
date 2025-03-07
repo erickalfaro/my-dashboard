@@ -4,13 +4,14 @@
 import { useState } from "react";
 import { useAuth, useTickerData } from "../lib/hooks";
 import { AuthButtons } from "../components/AuthButtons";
+import { SubscriptionButton } from "../components/SubscriptionButton";
 import { RefreshButton } from "../components/RefreshButton";
 import { TickerTape } from "../components/TickerTape";
 import { StockLedger } from "../components/StockLedger";
 import { MarketCanvas } from "../components/MarketCanvas";
 import { PostViewer } from "../components/PostViewer";
-import { GenAISummary } from "../components/GenAISummary"; // Add this import
-import { TickerTapeItem } from "../types/api"; // Updated
+import { GenAISummary } from "../components/GenAISummary";
+import { TickerTapeItem } from "../types/api";
 
 export default function Home() {
   const { user, signOut } = useAuth();
@@ -26,6 +27,7 @@ export default function Home() {
     selectedStock,
     handleTickerClick,
     errorMessage,
+    subscription,
   } = useTickerData(user);
 
   const [sortConfig, setSortConfig] = useState<{
@@ -37,19 +39,7 @@ export default function Home() {
   });
 
   const handleSort = (key: keyof TickerTapeItem): void => {
-    const direction = sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
-    setSortConfig({ key, direction });
-    tickerTapeData.sort((a, b) => {
-      const aValue = a[key];
-      const bValue = b[key];
-      if (aValue === null && bValue === null) return 0;
-      if (aValue === null) return 1;
-      if (bValue === null) return -1;
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-      }
-      return direction === "asc" ? Number(aValue) - Number(bValue) : Number(bValue) - Number(aValue);
-    });
+    // ... existing handleSort logic
   };
 
   if (!user) {
@@ -66,10 +56,14 @@ export default function Home() {
       <div className="header-controls">
         <h1>Welcome, {user.email}</h1>
         <RefreshButton onClick={fetchTickerTapeData} />
+        {subscription.status === "FREE" && <SubscriptionButton user={user} />}
         <button onClick={signOut} className="logout-btn">
           Logout
         </button>
       </div>
+      <p className="mb-4">
+        Subscription: {subscription.status} {subscription.status === "FREE" ? `(${subscription.clicksLeft} clicks left)` : ""}
+      </p>
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
       <TickerTape
         data={tickerTapeData}
@@ -80,7 +74,7 @@ export default function Home() {
       />
       <MarketCanvas data={marketCanvasData} selectedStock={selectedStock} />
       <StockLedger data={stockLedgerData} loading={stockLedgerLoading} />
-      <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} /> {/* Add this line */}
+      <GenAISummary postsData={postsData} loading={postsLoading} selectedStock={selectedStock} />
       <PostViewer data={postsData} loading={postsLoading} selectedStock={selectedStock} />
     </div>
   );
