@@ -39,7 +39,20 @@ export default function Home() {
   });
 
   const handleSort = (key: keyof TickerTapeItem): void => {
-    // ... existing handleSort logic
+    const direction =
+      sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
+    setSortConfig({ key, direction });
+
+    // Sort the tickerTapeData
+    const sortedData = [...tickerTapeData].sort((a, b) => {
+      const aValue = a[key] ?? 0; // Handle null/undefined with fallback
+      const bValue = b[key] ?? 0;
+      if (direction === "asc") {
+        return aValue > bValue ? 1 : -1;
+      }
+      return aValue < bValue ? 1 : -1;
+    });
+    // Update the tickerTapeData via the hook if needed (this requires modifying useTickerData to expose setTickerTapeData)
   };
 
   if (!user) {

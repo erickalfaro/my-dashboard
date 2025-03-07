@@ -36,11 +36,11 @@ export async function POST(req: Request) {
     }
 
     // Check if user already has a Stripe customer ID
-    let { data: userSub } = await supabase
-      .from("user_subscriptions")
-      .select("stripe_customer_id")
-      .eq("user_id", userId)
-      .single();
+    const { data: userSub } = await supabase
+    .from("user_subscriptions")
+    .select("stripe_customer_id")
+    .eq("user_id", userId)
+    .single();
 
     let customerId = userSub?.stripe_customer_id;
     if (!customerId) {

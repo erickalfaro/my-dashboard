@@ -6,7 +6,6 @@ import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
 import { debounce } from "./utils";
-import { stripe } from "./stripe";
 import {
   fetchTickerTapeData as apiFetchTickerTapeData,
   fetchStockLedgerData,
