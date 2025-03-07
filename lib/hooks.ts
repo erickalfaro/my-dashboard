@@ -1,20 +1,52 @@
+// lib/hooks.ts
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation"; // Added for redirection
+import { useRouter } from "next/navigation";
 import { supabase } from "./supabase";
 import { debounce } from "./utils";
+import { stripe } from "./stripe";
 import {
   fetchTickerTapeData as apiFetchTickerTapeData,
   fetchStockLedgerData,
   fetchMarketCanvasData,
   fetchPostsData,
 } from "./api";
-import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api"; // Updated
+import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api";
+
+// Subscription status interface
+interface SubscriptionStatus {
+  status: "FREE" | "PREMIUM";
+  clicksLeft: number;
+}
+
+// Define the return type for useSubscription
+interface SubscriptionData {
+  subscription: SubscriptionStatus;
+  setSubscription: React.Dispatch<React.SetStateAction<SubscriptionStatus>>;
+  loading: boolean;
+}
+
+// Define the return type for useTickerData
+export interface TickerData {
+  tickerTapeData: TickerTapeItem[];
+  stockLedgerData: StockLedgerData;
+  marketCanvasData: MarketCanvasData;
+  postsData: PostData[];
+  loading: boolean;
+  stockLedgerLoading: boolean;
+  postsLoading: boolean;
+  selectedStock: string | null;
+  fetchTickerTapeData: () => Promise<void>;
+  handleTickerClick: (ticker: string) => void;
+  errorMessage: string | null;
+  subscription: SubscriptionStatus;
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
-  const router = useRouter(); // Added for navigation
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -26,23 +58,23 @@ export function useAuth() {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (event === "SIGNED_OUT") {
-        router.push("/"); // Redirect to login page on sign-out
-        router.refresh(); // Force refresh to clear state
+        router.push("/");
+        router.refresh();
       }
     });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [router]); // Router added to dependencies
+  }, [router]);
 
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      setUser(null); // Clear user state
-      router.push("/"); // Redirect to login page
-      router.refresh(); // Ensure fresh state on redirect
+      setUser(null);
+      router.push("/");
+      router.refresh();
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -51,7 +83,63 @@ export function useAuth() {
   return { user, signOut };
 }
 
-export function useTickerData(user: User | null) {
+export function useSubscription(user: User | null): SubscriptionData {
+  const [subscription, setSubscription] = useState<SubscriptionStatus>({
+    status: "FREE",
+    clicksLeft: 10,
+  });
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchSubscription = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("user_subscriptions")
+          .select("subscription_status")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error && error.code !== "PGRST116") throw error; // Ignore "no rows" error
+
+        const status = data?.subscription_status || "FREE";
+
+        if (status === "PREMIUM") {
+          setSubscription({ status: "PREMIUM", clicksLeft: Infinity });
+        } else {
+          const now = new Date();
+          const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+          const { data: clicks, error: clicksError } = await supabase
+            .from("ticker_clicks")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("month_year", monthYear);
+
+          if (clicksError) throw clicksError;
+
+          const clicksUsed = clicks?.length || 0;
+          setSubscription({ status: "FREE", clicksLeft: Math.max(10 - clicksUsed, 0) });
+        }
+      } catch (error) {
+        console.error("Error fetching subscription:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscription();
+  }, [user]);
+
+  return { subscription, setSubscription, loading };
+}
+
+export function useTickerData(user: User | null): TickerData {
+  const { subscription, setSubscription, loading: subLoading } = useSubscription(user);
   const [tickerTapeData, setTickerTapeData] = useState<TickerTapeItem[]>([]);
   const [stockLedgerData, setStockLedgerData] = useState<StockLedgerData>({
     stockName: "",
@@ -88,7 +176,30 @@ export function useTickerData(user: User | null) {
   }, [user]);
 
   const handleTickerClick = useCallback(
-    (ticker: string) => {
+    async (ticker: string) => {
+      if (!user || subLoading) return;
+
+      if (subscription.status === "FREE" && subscription.clicksLeft <= 0) {
+        setErrorMessage("Free limit reached (10 tickers/month). Upgrade to PREMIUM for unlimited access.");
+        return;
+      }
+
+      // Record the click
+      const { error: clickError } = await supabase
+        .from("ticker_clicks")
+        .insert({ user_id: user.id, ticker });
+
+      if (clickError) {
+        console.error("Error recording ticker click:", clickError);
+        setErrorMessage("Failed to record ticker click.");
+        return;
+      }
+
+      // Update clicks left for FREE users
+      if (subscription.status === "FREE") {
+        setSubscription((prev) => ({ ...prev, clicksLeft: prev.clicksLeft - 1 }));
+      }
+
       const debouncedHandleTickerClick = debounce(async (ticker: string): Promise<void> => {
         setStockLedgerLoading(true);
         setPostsLoading(true);
@@ -130,7 +241,7 @@ export function useTickerData(user: User | null) {
       }, 300);
       debouncedHandleTickerClick(ticker);
     },
-    [] // No external dependencies needed here since everything is defined within
+    [user, subscription, setSubscription, subLoading] // Updated dependencies
   );
 
   return {
@@ -145,5 +256,6 @@ export function useTickerData(user: User | null) {
     fetchTickerTapeData,
     handleTickerClick,
     errorMessage,
+    subscription,
   };
 }
