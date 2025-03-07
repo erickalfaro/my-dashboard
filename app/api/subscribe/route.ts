@@ -7,11 +7,32 @@ export async function POST(req: Request) {
   try {
     const { userId } = await req.json();
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized: Missing or invalid Authorization header" }, { status: 401 });
+    }
 
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session || session.session.user.id !== userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const accessToken = authHeader.split(" ")[1]; // Extract token after "Bearer "
+    console.log("Received Access Token:", accessToken); // Log for debugging
+
+    // Set the session using the provided access token
+    const { data: session, error: sessionError } = await supabase.auth.getUser(accessToken);
+    if (sessionError || !session.user) {
+      console.error("Session validation error:", sessionError);
+      return NextResponse.json({ error: "Unauthorized: Invalid or expired token" }, { status: 401 });
+    }
+
+    if (session.user.id !== userId) {
+      return NextResponse.json({ error: "Unauthorized: User ID mismatch" }, { status: 401 });
+    }
+
+    // Check if STRIPE_PRICE_ID is defined
+    const stripePriceId = process.env.STRIPE_PRICE_ID;
+    if (!stripePriceId) {
+      console.error("STRIPE_PRICE_ID is not set in environment variables.");
+      return NextResponse.json(
+        { error: "Server configuration error: Missing Stripe Price ID" },
+        { status: 500 }
+      );
     }
 
     // Check if user already has a Stripe customer ID
@@ -24,7 +45,7 @@ export async function POST(req: Request) {
     let customerId = userSub?.stripe_customer_id;
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: session.session.user.email,
+        email: session.user.email,
         metadata: { supabaseUserId: userId },
       });
       customerId = customer.id;
@@ -38,14 +59,24 @@ export async function POST(req: Request) {
       customer: customerId,
       payment_method_types: ["card"],
       mode: "subscription",
-      line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+      line_items: [{ price: stripePriceId, quantity: 1 }],
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?canceled=true`,
     });
 
     return NextResponse.json({ sessionId: checkoutSession.id });
-  } catch (error) {
+  } catch (error: unknown) {
+    let errorMessage = "Unknown error occurred";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === "string") {
+      errorMessage = error;
+    }
+
     console.error("Error creating checkout session:", error);
-    return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create checkout session", details: errorMessage },
+      { status: 500 }
+    );
   }
 }
