@@ -10,7 +10,7 @@ import {
   fetchMarketCanvasData,
   fetchPostsData,
 } from "./api";
-import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types";
+import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "../types/api"; // Updated
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);

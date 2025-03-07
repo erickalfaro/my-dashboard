@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { PostData } from "../types";
+import { PostData } from "../types/api"; // Updated
 
 interface GenAISummaryProps {
   postsData: PostData[];

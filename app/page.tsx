@@ -10,7 +10,7 @@ import { StockLedger } from "../components/StockLedger";
 import { MarketCanvas } from "../components/MarketCanvas";
 import { PostViewer } from "../components/PostViewer";
 import { GenAISummary } from "../components/GenAISummary"; // Add this import
-import { TickerTapeItem } from "../types";
+import { TickerTapeItem } from "../types/api"; // Updated
 
 export default function Home() {
   const { user, signOut } = useAuth();

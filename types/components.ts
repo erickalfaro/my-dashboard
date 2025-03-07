@@ -1,5 +1,5 @@
 // types/components.ts
-import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "./ticker";
+import { TickerTapeItem, StockLedgerData, MarketCanvasData, PostData } from "./api"; // Updated import
 
 export interface TickerTapeProps {
   data: TickerTapeItem[];

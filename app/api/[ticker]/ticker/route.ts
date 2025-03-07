@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
-import { withValidation, handleApiError } from "../../baseRoute";
+import { withValidation, handleApiError } from "../../../../lib/baseRoute";
 
 type TickerContext = {
   params: Promise<{ ticker: string }>;
