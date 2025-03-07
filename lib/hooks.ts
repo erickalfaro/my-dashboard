@@ -1,7 +1,6 @@
 // lib/hooks.ts
 "use client";
 
-import { stripe } from "./stripe";
 import { useState, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
