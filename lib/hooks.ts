@@ -1,7 +1,6 @@
 // lib/hooks.ts
 "use client";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { stripe } from "./stripe";
 import { useState, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
@@ -50,6 +49,13 @@ export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
+  const getBaseUrl = () => {
+    if (typeof window !== "undefined") {
+      return window.location.origin;
+    }
+    return process.env.NEXT_PUBLIC_BASE_URL || `https://${process.env.VERCEL_URL}` || "http://localhost:3000";
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       const { data } = await supabase.auth.getSession();
@@ -72,11 +78,13 @@ export function useAuth() {
 
   const signOut = async () => {
     try {
+      console.log("Attempting to sign out...");
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      console.log("Sign out successful");
       setUser(null);
-      router.push("/");
-      router.refresh();
+      const baseUrl = getBaseUrl();
+      window.location.href = `${baseUrl}/`; // Hard redirect to ensure logout
     } catch (error) {
       console.error("Error signing out:", error);
     }

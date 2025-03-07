@@ -8,21 +8,31 @@ export async function POST(req: Request) {
     const { userId } = await req.json();
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized: Missing or invalid Authorization header" }, { status: 401 });
+      console.log("Missing or invalid Authorization header");
+      return NextResponse.json(
+        { error: "Unauthorized: Missing or invalid Authorization header" },
+        { status: 401 }
+      );
     }
 
-    const accessToken = authHeader.split(" ")[1]; // Extract token after "Bearer "
+    const accessToken = authHeader.split(" ")[1];
     console.log("Received Access Token:", accessToken); // Log for debugging
 
     // Set the session using the provided access token
     const { data: session, error: sessionError } = await supabase.auth.getUser(accessToken);
     if (sessionError || !session.user) {
-      console.error("Session validation error:", sessionError);
-      return NextResponse.json({ error: "Unauthorized: Invalid or expired token" }, { status: 401 });
+      console.error("Session validation error:", sessionError?.message);
+      return NextResponse.json(
+        { error: "Unauthorized: Invalid or expired token" },
+        { status: 401 }
+      );
     }
 
     if (session.user.id !== userId) {
-      return NextResponse.json({ error: "Unauthorized: User ID mismatch" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized: User ID mismatch" },
+        { status: 401 }
+      );
     }
 
     // Check if STRIPE_PRICE_ID is defined
@@ -37,10 +47,10 @@ export async function POST(req: Request) {
 
     // Check if user already has a Stripe customer ID
     const { data: userSub } = await supabase
-    .from("user_subscriptions")
-    .select("stripe_customer_id")
-    .eq("user_id", userId)
-    .single();
+      .from("user_subscriptions")
+      .select("stripe_customer_id")
+      .eq("user_id", userId)
+      .single();
 
     let customerId = userSub?.stripe_customer_id;
     if (!customerId) {
@@ -64,7 +74,10 @@ export async function POST(req: Request) {
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/?canceled=true`,
     });
 
-    return NextResponse.json({ sessionId: checkoutSession.id });
+    return NextResponse.json(
+      { sessionId: checkoutSession.id },
+      { headers: { "Access-Control-Allow-Origin": "*" } }
+    );
   } catch (error: unknown) {
     let errorMessage = "Unknown error occurred";
     if (error instanceof Error) {

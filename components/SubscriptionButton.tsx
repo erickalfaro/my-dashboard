@@ -16,8 +16,10 @@ export const SubscriptionButton: React.FC<{ user: User }> = ({ user }) => {
     setLoading(true);
     setError(null);
     try {
-      const { data: session } = await supabase.auth.getSession();
-      const accessToken = session.session?.access_token;
+      // Refresh session to ensure a valid token
+      const { data: session, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError || !session.session) throw new Error("Failed to refresh session");
+      const accessToken = session.session.access_token;
       if (!accessToken) throw new Error("No access token available");
 
       const response = await fetch("/api/subscribe", {
