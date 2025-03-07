@@ -17,6 +17,7 @@ export default function Home() {
   const { user, signOut } = useAuth();
   const {
     tickerTapeData,
+    setTickerTapeData,
     loading,
     fetchTickerTapeData,
     stockLedgerData,
@@ -43,16 +44,15 @@ export default function Home() {
       sortConfig.key === key && sortConfig.direction === "asc" ? "desc" : "asc";
     setSortConfig({ key, direction });
 
-    // Sort the tickerTapeData
     const sortedData = [...tickerTapeData].sort((a, b) => {
-      const aValue = a[key] ?? 0; // Handle null/undefined with fallback
+      const aValue = a[key] ?? 0; // Fallback for null/undefined
       const bValue = b[key] ?? 0;
       if (direction === "asc") {
-        return aValue > bValue ? 1 : -1;
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
       }
-      return aValue < bValue ? 1 : -1;
+      return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
     });
-    // Update the tickerTapeData via the hook if needed (this requires modifying useTickerData to expose setTickerTapeData)
+    setTickerTapeData(sortedData); // Persist the sorted data
   };
 
   if (!user) {
@@ -75,7 +75,8 @@ export default function Home() {
         </button>
       </div>
       <p className="mb-4">
-        Subscription: {subscription.status} {subscription.status === "FREE" ? `(${subscription.clicksLeft} clicks left)` : ""}
+        Subscription: {subscription.status}{" "}
+        {subscription.status === "FREE" ? `(${subscription.clicksLeft} clicks left)` : ""}
       </p>
       {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
       <TickerTape

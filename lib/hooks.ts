@@ -1,6 +1,8 @@
 // lib/hooks.ts
 "use client";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { stripe } from "./stripe";
 import { useState, useEffect, useCallback } from "react";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
@@ -30,6 +32,7 @@ interface SubscriptionData {
 // Define the return type for useTickerData
 export interface TickerData {
   tickerTapeData: TickerTapeItem[];
+  setTickerTapeData: React.Dispatch<React.SetStateAction<TickerTapeItem[]>>;
   stockLedgerData: StockLedgerData;
   marketCanvasData: MarketCanvasData;
   postsData: PostData[];
@@ -240,11 +243,12 @@ export function useTickerData(user: User | null): TickerData {
       }, 300);
       debouncedHandleTickerClick(ticker);
     },
-    [user, subscription, setSubscription, subLoading] // Updated dependencies
+    [user, subscription, setSubscription, subLoading]
   );
 
   return {
     tickerTapeData,
+    setTickerTapeData,
     stockLedgerData,
     marketCanvasData,
     postsData,
